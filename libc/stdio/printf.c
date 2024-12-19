@@ -4,12 +4,32 @@
 #include <stdio.h>
 #include <string.h>
 
+char msg[100];
 static bool print(const char* data, size_t length) {
 	const unsigned char* bytes = (const unsigned char*) data;
 	for (size_t i = 0; i < length; i++)
 		if (putchar(bytes[i]) == EOF)
 			return false;
 	return true;
+}
+
+// TODO do negative
+static const char* to_str(int val) {
+    int tmp = val;
+    int i = 0;
+    memset(msg, 0, sizeof(msg));
+    while(tmp) {
+        msg[i] = tmp % 10 + '0';
+        tmp /= 10;
+        i++;
+    }
+    for(int k=0;k<(i-1)/2;k++) {
+        char c = msg[k];
+        msg[k] = msg[i - k - 1];
+        msg[i - k - 1] = c;
+    }
+    msg[i] = '\0';
+    return msg;
 }
 
 int printf(const char* restrict format, ...) {
@@ -61,7 +81,20 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
-		} else {
+		} else if (*format == 'd') {
+            format++;
+            int x = va_arg(parameters, int);
+            const char* msg = to_str(x);
+			size_t len = strlen(msg);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(msg, len))
+				return -1;
+			written += len;
+			format += len;
+        } else {
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {
