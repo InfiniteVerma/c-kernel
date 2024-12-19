@@ -34,7 +34,7 @@ headers:
 		DESTDIR=$(SYSROOT) $(MAKE) -C $$proj install-headers; \
 	done
 
-build:
+build: headers
 	@for proj in $(PROJECTS); do \
 		echo "Creating iso - $$proj..."; \
 		DESTDIR=$(SYSROOT) $(MAKE) -C $$proj install; \
