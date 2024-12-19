@@ -16,6 +16,8 @@ export BOOTDIR=/boot
 export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
 
+echo $PATH | tr ':' '\n'
+
 export CFLAGS='-O2 -g'
 export CPPFLAGS=''
 
