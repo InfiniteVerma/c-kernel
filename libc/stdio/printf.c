@@ -99,7 +99,6 @@ int printf(const char* restrict format, ...) {
 			if (!print(msg, len))
 				return -1;
 			written += len;
-			format += len;
         } else {
 			format = format_begun_at;
 			size_t len = strlen(format);
