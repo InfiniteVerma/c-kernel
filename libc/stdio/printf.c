@@ -23,12 +23,18 @@ static const char* to_str(int val) {
         tmp /= 10;
         i++;
     }
-    for(int k=0;k<(i-1)/2;k++) {
-        char c = msg[k];
-        msg[k] = msg[i - k - 1];
-        msg[i - k - 1] = c;
-    }
     msg[i] = '\0';
+    int start = 0;
+    int end = i - 1; 
+    while(start < end) {
+        char c = msg[start];
+        msg[start] = msg[end];
+        msg[end] = c;
+        start++;
+        end--;
+    }
+    //for(int k=0;k<(i-1)/2;k++) {
+    //}
     return msg;
 }
 

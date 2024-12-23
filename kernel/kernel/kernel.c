@@ -39,12 +39,14 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     //}
 
 	printf("Hello, kernel World!\n");
-    //panic("asdf");
     printf("Booting!\n");
     const char* x = "ANANT";
     printf("%s\n", x);
     printf("%c\n", x[0]);
-    int written = printf("%d\n", 1234);
-    printf("%d\n", written);
+    //int written = printf("%d\n", 1234);
+    //printf("%d\n", written);
+    printf("%dABC\n", (int)strlen(x));
+    //printf("\nDELIM\n");
+    printf("%d\n", 42);
     //printf("world\n");
 }
