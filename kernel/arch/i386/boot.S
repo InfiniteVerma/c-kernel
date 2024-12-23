@@ -29,8 +29,8 @@ _start:
 	# Call the global constructors.
 	#call _init
 
-    push %ebx
     push %eax
+    push %ebx
 	# Transfer control to the main kernel.
 	call kernel_main
 
