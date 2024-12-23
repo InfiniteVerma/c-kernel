@@ -39,17 +39,10 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
         printf("Start Addr: %d | Length: %d | Size: %d | Type: %d\n",
             mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
 
-        size += mmmt->size;
+        size += mmmt->len;
+        printf("%d\n", size);
     }
 
-    printf("Total size: %d!\n", size);
+    printf("Total size: <%d>!\n", size);
     const char* x = "ANANT";
-    printf("%s\n", x);
-    printf("%c\n", x[0]);
-    //int written = printf("%d\n", 1234);
-    //printf("%d\n", written);
-    printf("%dABC\n", (int)strlen(x));
-    //printf("\nDELIM\n");
-    printf("%d\n", 42);
-    //printf("world\n");
 }

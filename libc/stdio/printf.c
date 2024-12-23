@@ -33,8 +33,6 @@ static const char* to_str(int val) {
         start++;
         end--;
     }
-    //for(int k=0;k<(i-1)/2;k++) {
-    //}
     return msg;
 }
 
