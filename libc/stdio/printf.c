@@ -13,6 +13,42 @@ static bool print(const char* data, size_t length) {
 	return true;
 }
 
+void reverse(const char* ptr, int len) {
+    int start = 0;
+    int end = len - 1; 
+    while(start < end) {
+        char c = msg[start];
+        msg[start] = msg[end];
+        msg[end] = c;
+        start++;
+        end--;
+    }
+}
+
+static const char* int_to_hex_char(int inp) {
+
+    int i = 0;
+    memset(msg, 0, sizeof(msg));
+    if(inp == 0) {
+        msg[0] = '0';
+        msg[1] = '\0';
+        return msg;
+    }
+    while(inp) {
+        if (inp % 16 < 10) {
+            msg[i] = (inp % 16) + '0';  // For digits 0-9
+        } else {
+            msg[i] = (inp % 16) - 10 + 'a';  // For characters a-f
+        }
+        i++;
+        inp /= 16;
+    }
+    msg[i] = '\0';
+    reverse(msg, i);
+
+    return msg;
+}
+
 // TODO do negative
 static const char* to_str(int val) {
 
@@ -30,15 +66,7 @@ static const char* to_str(int val) {
         i++;
     }
     msg[i] = '\0';
-    int start = 0;
-    int end = i - 1; 
-    while(start < end) {
-        char c = msg[start];
-        msg[start] = msg[end];
-        msg[end] = c;
-        start++;
-        end--;
-    }
+    reverse(msg, i);
     return msg;
 }
 
@@ -115,9 +143,33 @@ int printf(const char* restrict format, ...) {
 			if (!print(msg, len))
 				return -1;
 			written += len;
+        } else if (*format == 'x') { // hex
+            format++;
+            unsigned long long x = va_arg(parameters, unsigned long long); // TODO?
+            const char* msg = int_to_hex_char(x);
+			size_t len = strlen(msg);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(msg, len))
+				return -1;
+			written += len;
         } else if(memcmp(format, "llu", 3) == 0) {
             format+=3;
             unsigned long long x = va_arg(parameters, unsigned long long);
+            const char* msg = to_str(x);
+			size_t len = strlen(msg);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(msg, len))
+				return -1;
+			written += len;
+        } else if(memcmp(format, "lu", 2) == 0) {
+            format+=2;
+            unsigned long x = va_arg(parameters, unsigned long);
             const char* msg = to_str(x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {

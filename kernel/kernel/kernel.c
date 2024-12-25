@@ -29,8 +29,6 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 
     int i;
 	printf("Hello, kernel World, bootloader: %s\n", mbd->boot_loader_name);
-    printf("First: %d, Second: %d, Third: %d, Fourth: %d\n", 123, 245, 456, 888);
-    printf("First: %d, Second: %d, Third: %d, Fourth: %d\n", 123, 245, 456, 888);
 
     long long size = 0;
     for(i = 0; i < mbd->mmap_length;
@@ -39,13 +37,13 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
         multiboot_memory_map_t* mmmt = 
             (multiboot_memory_map_t*) (mbd->mmap_addr + i);
 
-        printf("Size: %u : Addr: %llu : Len %llu : Type %u", mmmt->size, mmmt->addr, mmmt->len, mmmt->type);
+        printf("Size: %u : Addr: 0x%x : Len 0x%x : Type %u", mmmt->size, mmmt->addr, mmmt->len, mmmt->type);
         printf("\n---\n");
 
         size += mmmt->len;
     }
 
-    printf("Total size: <%d>M!\n", size / 1024 / 1024);
-    printf("Kernel start: %d\n", &KERNEL_START);
-    printf("Kernel end: %d\n", &KERNEL_END);
+    printf("Total size: %lluM!\n", size / 1024 / 1024);
+    printf("Kernel start: 0x%x\n", &KERNEL_START);
+    printf("Kernel end: 0x%x\n", &KERNEL_END);
 }
