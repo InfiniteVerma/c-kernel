@@ -15,9 +15,15 @@ static bool print(const char* data, size_t length) {
 
 // TODO do negative
 static const char* to_str(int val) {
+
     int tmp = val;
     int i = 0;
     memset(msg, 0, sizeof(msg));
+    if(val == 0) {
+        msg[0] = '0';
+        msg[1] = '\0';
+        return msg;
+    }
     while(tmp) {
         msg[i] = tmp % 10 + '0';
         tmp /= 10;
@@ -88,6 +94,30 @@ int printf(const char* restrict format, ...) {
 		} else if (*format == 'd') {
             format++;
             int x = va_arg(parameters, int);
+            const char* msg = to_str(x);
+			size_t len = strlen(msg);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(msg, len))
+				return -1;
+			written += len;
+        } else if (*format == 'u') {
+            format++;
+            unsigned int x = va_arg(parameters, unsigned int);
+            const char* msg = to_str(x);
+			size_t len = strlen(msg);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(msg, len))
+				return -1;
+			written += len;
+        } else if(memcmp(format, "llu", 3) == 0) {
+            format+=3;
+            unsigned long long x = va_arg(parameters, unsigned long long);
             const char* msg = to_str(x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {

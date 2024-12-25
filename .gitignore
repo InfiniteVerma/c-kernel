@@ -2,3 +2,5 @@
 isodir
 sysroot
 tags
+*.txt
+*log
