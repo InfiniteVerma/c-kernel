@@ -271,4 +271,6 @@ struct multiboot_apm_info
 
 #endif /* ! ASM_FILE */
 
+void parse_multiboot_info(multiboot_info_t* mbd, unsigned int magic);
+
 #endif /* ! MULTIBOOT_HEADER */

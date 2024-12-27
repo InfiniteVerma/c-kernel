@@ -1,49 +1,24 @@
 #include <stdio.h>
 #include <kernel/tty.h>
 #include <kernel/multiboot.h>
-#include <string.h>
+#include <kernel/panic.h>
+#include <kernel/allocator.h>
 
-extern unsigned long KERNEL_START;
-extern unsigned long KERNEL_END;
+extern unsigned int get_esp();
 
-void panic(const char* msg) {
-    printf("panicking");
-
-    while (1) {
-        asm volatile ("hlt");
-    }
-}
+#define DEBUG
 
 void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 
+    unsigned int esp = get_esp();
 	terminal_initialize();
-    if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        printf("invalid magic number\n");
-        return;
-    }
-
-    if(!(mbd->flags >> 6 & 0x1)) {
-        printf("invalid memory map given by GRUB bootloader");
-        return;
-    }
-
-    int i;
+    printf("Stack pointer: 0x%x\n", esp);
 	printf("Hello, kernel World, bootloader: %s\n", mbd->boot_loader_name);
-
-    long long size = 0;
-    for(i = 0; i < mbd->mmap_length;
-            i += sizeof(multiboot_memory_map_t))
-    {
-        multiboot_memory_map_t* mmmt = 
-            (multiboot_memory_map_t*) (mbd->mmap_addr + i);
-
-        printf("Size: %u : Addr: 0x%x : Len 0x%x : Type %u", mmmt->size, mmmt->addr, mmmt->len, mmmt->type);
-        printf("\n---\n");
-
-        size += mmmt->len;
-    }
-
-    printf("Total size: %lluM!\n", size / 1024 / 1024);
-    printf("Kernel start: 0x%x\n", &KERNEL_START);
-    printf("Kernel end: 0x%x\n", &KERNEL_END);
+    
+#ifdef DEBUG
+    parse_multiboot_info(mbd, magic);
+#endif
+    initialize_free_segments(mbd);
+    
+    printf("DONE\n");
 }

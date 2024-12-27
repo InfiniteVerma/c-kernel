@@ -38,4 +38,11 @@ _start:
 	cli
 1:	hlt
 	jmp 1b
+
+.global get_esp
+.type get_esp, @function
+get_esp:
+    mov %esp,%eax
+    ret
+
 .size _start, . - _start
