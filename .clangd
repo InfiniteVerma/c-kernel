@@ -1,7 +1,7 @@
 CompileFlags:
   Add: [
     #-nostdinc, 
-    -isysroot, /home/anant/dev/projs/chihaya-os/sysroot, 
-    -I/home/anant/dev/projs/chihaya-os/sysroot/usr/include,
+    -isysroot, /home/anant/dev/projs/c-kernel/sysroot, 
+    -I/home/anant/dev/projs/c-kernel/sysroot/usr/include,
     -I/home/anant/dev/projs/barebones/opt/cross/lib/gcc/i686-elf/14.2.0/include/
   ]
