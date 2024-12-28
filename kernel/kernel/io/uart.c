@@ -48,3 +48,8 @@ void serial_write(const char* msg, int len) {
 void serial_putchar(const char c) {
     outb(PORT, c);
 }
+
+void exit_(const uint8_t code) {
+    const uint8_t ISA_DEBUG_EXIT_PORT = 0xf4;
+    outb(ISA_DEBUG_EXIT_PORT, code);
+}

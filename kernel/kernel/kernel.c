@@ -42,4 +42,5 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     free(str_array);
     
     printf("DONE\n");
+    //exit_(0);
 }
