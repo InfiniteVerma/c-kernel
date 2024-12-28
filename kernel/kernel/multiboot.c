@@ -23,8 +23,8 @@ void parse_multiboot_info(multiboot_info_t* mbd, unsigned int magic) {
         multiboot_memory_map_t* mmmt = 
             (multiboot_memory_map_t*) (mbd->mmap_addr + i);
 
-        printf("Size: %u : Addr: 0x%x : Len %lluK : Type %u", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
-        printf("\n---\n");
+        //printf("Size: %u : Addr: 0x%x : Len %lluK : Type %u", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
+        //printf("\n---\n");
 
         size += mmmt->len;
     }
