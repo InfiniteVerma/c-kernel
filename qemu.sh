@@ -17,9 +17,6 @@ else
     qemu-system-$(./target-triplet-to-arch.sh $HOST) -s -S -serial stdio -cdrom myos.iso -vnc :0 &
 fi
 
-#qemu-system-$(./target-triplet-to-arch.sh $HOST) -cdrom myos.iso
-#qemu-system-$(./target-triplet-to-arch.sh $HOST) -m 1G -s -S -cdrom myos.iso -vnc :0 &
-
 sleep 1
 
 vncviewer :0
