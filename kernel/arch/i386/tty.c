@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <kernel/tty.h>
+#include <kernel/io/uart.h>
 
 #include "vga.h"
 
@@ -54,10 +55,13 @@ void terminal_putchar(char c) {
 }
 
 void terminal_write(const char* data, size_t size) {
-	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
+    for (size_t i = 0; i < size; i++) {
+        terminal_putchar(data[i]);
+        serial_putchar(data[i]);
+    }
 }
 
 void terminal_writestring(const char* data) {
 	terminal_write(data, strlen(data));
+    serial_write(data, strlen(data));
 }
