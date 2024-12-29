@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 . ./config.sh
 
 mkdir -p "$SYSROOT"

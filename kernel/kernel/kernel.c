@@ -4,6 +4,7 @@
 #include <kernel/panic.h>
 #include <kernel/allocator.h>
 #include <kernel/io/uart.h>
+#include <kernel/io/rtc.h>
 
 extern unsigned int get_esp();
 
@@ -23,11 +24,21 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 #endif
     initialize_free_segments(mbd);
 
+    configure_rtc();
+
 #ifdef TEST
     printf("Starting tests\n");
     run_allocator_tests();
 #endif
     
-    printf("DONE\n");
-    //exit_(1);
+    struct DateTime date_time = get_date_time();
+    print_date_time(date_time);
+
+    date_time.hours -= 1;
+    set_date_time(date_time);
+
+    printf("After updating\n");
+    date_time = get_date_time();
+    print_date_time(date_time);
+    exit_(0);
 }

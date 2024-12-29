@@ -35,6 +35,7 @@ kernel/multiboot.o \
 kernel/allocator.o \
 kernel/panic.o \
 kernel/io/uart.o \
+kernel/io/rtc.o \
 
 OBJS=\
 $(ARCHDIR)/crti.o \

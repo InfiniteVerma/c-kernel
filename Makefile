@@ -26,11 +26,14 @@ ifeq ($(shell echo $(HOST) | grep -Eq -- '-elf$$'),)
 	export CC := $(CC) -isystem=$(INCLUDEDIR)
 endif
 
-all: headers build
+all: headers build iso
 
 test: CFLAGS += -DTEST
 test: headers build
 	$(QEMU_SCRIPT)
+
+iso:
+	./iso.sh
 
 headers:
 	@mkdir -p $(SYSROOT)
