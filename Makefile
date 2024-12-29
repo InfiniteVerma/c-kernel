@@ -29,7 +29,7 @@ endif
 all: headers build iso
 
 test: CFLAGS += -DTEST
-test: headers build
+test: headers build iso
 	$(QEMU_SCRIPT)
 
 iso:

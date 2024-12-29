@@ -28,7 +28,6 @@ void FreeSegment_delete(const struct FreeSegment*);
 struct FreeSegment* deep_copy(const struct FreeSegment* a);
 
 #ifdef TEST
-void test_1();
 void run_allocator_tests();
 #endif
 

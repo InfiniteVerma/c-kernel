@@ -3,6 +3,7 @@
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
 #include <kernel/allocator.h>
+#include <kernel/gdt.h>
 #include <kernel/io/uart.h>
 #include <kernel/io/rtc.h>
 
@@ -29,16 +30,19 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 #ifdef TEST
     printf("Starting tests\n");
     run_allocator_tests();
+    run_gdt_tests();
 #endif
     
-    struct DateTime date_time = get_date_time();
-    print_date_time(date_time);
+    //struct DateTime date_time = get_date_time();
+    //print_date_time(date_time);
 
-    date_time.hours -= 1;
-    set_date_time(date_time);
+    //date_time.hours -= 1;
+    //set_date_time(date_time);
 
-    printf("After updating\n");
-    date_time = get_date_time();
-    print_date_time(date_time);
+    //printf("After updating\n");
+    //date_time = get_date_time();
+    //print_date_time(date_time);
+#ifdef TEST
     exit_(0);
+#endif
 }

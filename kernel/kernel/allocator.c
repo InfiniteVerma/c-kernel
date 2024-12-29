@@ -176,12 +176,7 @@ void FreeSegment_delete(const struct FreeSegment* a) {
 }
 
 #ifdef TEST
-void run_allocator_tests() {
-    test_1();
-    printf("Allocator: [OK]\n");
-}
-
-void test_1() {
+static void test_1() {
     extern struct FreeSegment* freeSegment;
     struct FreeSegment* before = deep_copy(freeSegment);
     int* allocated_ptr = (int*)malloc(4 * sizeof(int));
@@ -199,5 +194,10 @@ void test_1() {
 
     assert(FreeSegment_equals(before, freeSegment), "Does not match");
     FreeSegment_delete(before);
+}
+
+void run_allocator_tests() {
+    test_1();
+    printf("Allocator: [OK]\n");
 }
 #endif
