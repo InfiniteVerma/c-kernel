@@ -25,8 +25,7 @@ void reverse(const char* ptr, int len) {
     }
 }
 
-static const char* int_to_hex_char(int inp) {
-
+static const char* int_to_hex_char(unsigned long long inp) {
     int i = 0;
     memset(msg, 0, sizeof(msg));
     if(inp == 0) {
