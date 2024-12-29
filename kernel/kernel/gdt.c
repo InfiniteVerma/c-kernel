@@ -4,6 +4,8 @@
 #include <stdio.h>
 #endif
 
+#define FLAGS 1100
+
 uint64_t gdt_parse_base(uint64_t segment) {
     uint64_t ret = 0;
 
