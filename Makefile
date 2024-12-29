@@ -2,6 +2,7 @@ PROJECTS = libc kernel
 SYSROOT = $(PWD)/sysroot
 
 NEW_PATH := $(shell ./my_path.sh)
+QEMU_SCRIPT := ./qemu.sh
 export PATH := $(NEW_PATH):$(PATH)
 export PREFIX := /usr
 export HOST := $(shell ./default-host.sh)
@@ -27,6 +28,10 @@ endif
 
 all: headers build
 
+test: CFLAGS += -DTEST
+test: headers build
+	$(QEMU_SCRIPT)
+
 headers:
 	@mkdir -p $(SYSROOT)
 	echo $(SYSROOT)
@@ -37,7 +42,6 @@ headers:
 
 build: headers
 	@for proj in $(PROJECTS); do \
-		echo "Creating iso - $$proj..."; \
 		DESTDIR=$(SYSROOT) $(MAKE) -C $$proj install; \
 	done
 

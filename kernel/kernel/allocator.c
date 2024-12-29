@@ -15,7 +15,9 @@ static void insert_segment_into_free_list(struct FreeSegment*);
 static void merge_segments(struct FreeSegment*, struct FreeSegment*);
 
 void initialize_free_segments(multiboot_info_t* mbd) {
-    //printf("initialize_free_segments START\n");
+#ifdef DEBUG
+    printf("initialize_free_segments START\n");
+#endif
 
     assert(sizeof(struct FreeSegment) == sizeof(struct AllocatedSegment), "FreeSegment and AllocatedSegment struct sizes are different!");
 
@@ -31,7 +33,9 @@ void initialize_free_segments(multiboot_info_t* mbd) {
             (multiboot_memory_map_t*) (mbd->mmap_addr + i);
 
         if((uintptr_t)mmmt->addr == (uintptr_t)&KERNEL_START) {
-            //printf("FOUND MATCHING: Size: %u : Addr: 0x%x : Len %lluK : Type %u\n", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
+#ifdef DEBUG
+            printf("FOUND MATCHING: Size: %u : Addr: 0x%x : Len %lluK : Type %u\n", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
+#endif
             entry.size = mmmt->size;
             entry.addr = mmmt->addr;
             entry.len = mmmt->len;
@@ -135,3 +139,65 @@ static void merge_segments(struct FreeSegment* a, struct FreeSegment* b) {
         a->next_segment = b->next_segment;
     }
 }
+
+int FreeSegment_equals(const struct FreeSegment *a, const struct FreeSegment *b) {
+    if(a == NULL && b == NULL) return 1;
+    if(a == NULL || b == NULL) return 0;
+
+    return a->size == b->size && FreeSegment_equals(a->next_segment, b->next_segment);
+}
+
+void FreeSegment_print(const struct FreeSegment *a) {
+    printf("FreeSegment: ");
+    if(!a) {
+        printf("NULL\n");
+        return;
+    }
+    printf("Size: %d", a->size);
+}
+
+// TODO make this usable by any all linked lists?
+struct FreeSegment* deep_copy(const struct FreeSegment* a) {
+    if(!a) {
+        return NULL;
+    }
+
+    struct FreeSegment* free_segment_copy = (struct FreeSegment*) malloc(sizeof(struct FreeSegment));
+    free_segment_copy->size = a->size; // RHS size is modified by above malloc
+    free_segment_copy->next_segment = deep_copy(a->next_segment);
+    return free_segment_copy;
+}
+
+void FreeSegment_delete(const struct FreeSegment* a) {
+    if(!a) return;
+
+    FreeSegment_delete(a->next_segment);
+    free((void*)a);
+}
+
+#ifdef TEST
+void run_allocator_tests() {
+    test_1();
+    printf("Allocator: [OK]\n");
+}
+
+void test_1() {
+    extern struct FreeSegment* freeSegment;
+    struct FreeSegment* before = deep_copy(freeSegment);
+    int* allocated_ptr = (int*)malloc(4 * sizeof(int));
+    allocated_ptr[0] = 1;
+    allocated_ptr[1] = 2;
+    allocated_ptr[2] = 3;
+    allocated_ptr[3] = 4;
+
+    char* str_array = (char*)malloc(11 * sizeof(char));
+    memset(str_array, '\0', 11);
+    memcpy(str_array, "helloworld\0", 11);
+
+    free(allocated_ptr);
+    free(str_array);
+
+    assert(FreeSegment_equals(before, freeSegment), "Does not match");
+    FreeSegment_delete(before);
+}
+#endif

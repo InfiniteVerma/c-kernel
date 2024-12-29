@@ -20,4 +20,16 @@ void initialize_free_segments(multiboot_info_t* mbd);
 void* malloc(size_t); // TODO move to libc?
 void free(void* ptr); // TODO move to libc?
 
+int FreeSegment_equals(const struct FreeSegment* a, const struct FreeSegment* b);
+void FreeSegment_print(const struct FreeSegment*);
+void FreeSegment_delete(const struct FreeSegment*);
+
+// TODO make this usable by any all linked lists?
+struct FreeSegment* deep_copy(const struct FreeSegment* a);
+
+#ifdef TEST
+void test_1();
+void run_allocator_tests();
 #endif
+
+#endif /* __ALLOCATOR__ */

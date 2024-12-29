@@ -2,6 +2,8 @@
 set -e
 . ./iso.sh
 
+#kill -9 $(pgrep qe)
+
 echo $#
 
 serial_flag="-serial stdio"

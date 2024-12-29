@@ -19,6 +19,7 @@ LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 ARCHDIR=arch/$(HOSTARCH)
+TESTDIR=../tests/
 
 include $(ARCHDIR)/make.config
 
