@@ -28,8 +28,12 @@ endif
 
 all: headers build iso
 
+debug: CFLAGS += -DDEBUG
+debug: all
+	$(QEMU_SCRIPT)
+
 test: CFLAGS += -DTEST
-test: headers build iso
+test: all
 	$(QEMU_SCRIPT)
 
 iso:

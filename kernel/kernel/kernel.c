@@ -9,9 +9,6 @@
 
 extern unsigned int get_esp();
 
-#ifdef TEST
-#endif
-
 void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 
     //unsigned int esp = get_esp();
@@ -24,8 +21,9 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     parse_multiboot_info(mbd, magic);
 #endif
     initialize_free_segments(mbd);
-
     configure_rtc();
+    init_gdt();
+    printf("lgdt done");
 
 #ifdef TEST
     printf("Starting tests\n");

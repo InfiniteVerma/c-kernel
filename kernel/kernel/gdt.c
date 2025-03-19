@@ -6,7 +6,7 @@
 
 #define FLAGS 1100
 
-uint64_t gdt_parse_base(uint64_t segment) {
+static const uint64_t gdt_parse_base(uint64_t segment) {
     uint64_t ret = 0;
 
     const uint64_t BASE_LOWER_MASK = (uint64_t)0xFFFFFF << 16;
@@ -18,7 +18,7 @@ uint64_t gdt_parse_base(uint64_t segment) {
     return ret;
 }
 
-uint64_t gdt_parse_limit(uint64_t segment) {
+static const uint64_t gdt_parse_limit(uint64_t segment) {
     uint64_t ret = 0;
 
     const uint64_t LIMIT_LOWER_MASK = 0xFFFF;
@@ -32,42 +32,42 @@ uint64_t gdt_parse_limit(uint64_t segment) {
     return ret;
 }
 
-void set_p(struct AccessByte* access_byte, const uint8_t val) {
+static void set_p(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->p = val;
 }
 
-void set_dpl(struct AccessByte* access_byte, const uint8_t val) {
+static void set_dpl(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 2) == 0, "Not two bits");
     access_byte->dpl = val;
 }
 
-void set_s(struct AccessByte* access_byte, const uint8_t val) {
+static void set_s(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->s = val;
 }
 
-void set_e(struct AccessByte* access_byte, const uint8_t val) {
+static void set_e(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->e = val;
 }
 
-void set_dc(struct AccessByte* access_byte, const uint8_t val) {
+static void set_dc(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->dc = val;
 }
 
-void set_rw(struct AccessByte* access_byte, const uint8_t val) {
+static void set_rw(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->rw = val;
 }
 
-void set_a(struct AccessByte* access_byte, const uint8_t val) {
+static void set_a(struct AccessByte* access_byte, const uint8_t val) {
     assert((val >> 1) == 0, "Not one bit");
     access_byte->a = val;
 }
 
-uint8_t get_binary_from_access_type(const struct AccessByte access_byte) {
+static const uint8_t get_binary_from_access_byte(const struct AccessByte access_byte) {
     uint8_t ret = 0;
 
     ret |= access_byte.a;
@@ -101,11 +101,7 @@ static uint64_t insert_limit(uint32_t limit) {
     return ret;
 }
 
-static uint64_t insert_access_byte(const struct AccessByte access_byte) {
-    return ((uint64_t)get_binary_from_access_type(access_byte) << 40);
-}
-
-uint64_t create_descriptor(uint32_t base, uint32_t limit, uint16_t flag) {
+static const uint64_t create_descriptor(uint32_t base, uint32_t limit, uint16_t flag) {
     uint64_t ret = 0;
     // first top 32 bits
     ret |= (base >> 16) & 0x000000FF;
@@ -121,13 +117,64 @@ uint64_t create_descriptor(uint32_t base, uint32_t limit, uint16_t flag) {
     return ret;
 }
 
+static void fill_gdt_vals(uint64_t* segments) {
+    struct AccessByte code_access_byte;
+    set_p(&code_access_byte, 1);
+    set_dpl(&code_access_byte, 0);
+    set_s(&code_access_byte, 1);
+    set_e(&code_access_byte, 1);
+    set_dc(&code_access_byte, 0);
+    set_rw(&code_access_byte, 0);
+    set_a(&code_access_byte, 1);
+
+    uint16_t flags = 0x1100;
+    flags = (flags << 12);
+    flags |= get_binary_from_access_byte(code_access_byte);
+
+    const uint64_t code_segment = create_descriptor(0, 0xffffffff, flags);
+
+    struct AccessByte data_access_byte;
+    set_p(&data_access_byte, 1);
+    set_dpl(&data_access_byte, 0);
+    set_s(&data_access_byte, 1);
+    set_e(&data_access_byte, 0);
+    set_dc(&data_access_byte, 0);
+    set_rw(&data_access_byte, 1);
+    set_a(&data_access_byte, 1);
+
+    flags = 0x1100;
+    flags = (flags << 12);
+    flags |= get_binary_from_access_byte(data_access_byte);
+    const uint64_t data_segment = create_descriptor(0, 0xffffffff, flags);
+
+    const uint64_t null_segment = 0;
+
+    segments[0] = null_segment;
+    segments[1] = code_segment;
+    segments[2] = data_segment;
+}
+
+void init_gdt() {
+    uint64_t gdt[3] = {0};
+    fill_gdt_vals(gdt);
+
+    GDTDescriptor gdtr = {
+        .limit = sizeof(gdt) - 1,
+        .base = (uint64_t)gdt,
+    };
+
+    asm volatile (
+        "lgdt (%0)"
+        :  // No output operands
+        : "r" (&gdtr) : "memory"
+    );
+}
 
 #ifdef TEST
 // tests
 static void test_basic_parsing() {
     const uint64_t TEST_SEGMENT = 0x120D00345678BEEF;
     assert(gdt_parse_limit(TEST_SEGMENT) == 0xdbeef, "Test failed");
-    //printf("Got: %lu\n", gdt_parse_base(TEST_SEGMENT));
     assert(gdt_parse_base(TEST_SEGMENT) == 0x12345678, "Test failed");
 }
 
@@ -207,6 +254,6 @@ void run_gdt_tests() {
     test_create_descriptor();
     test_insert_base();
     test_insert_limit();
-    printf("GDT: [OK]\n");
+    printf("Global Descriptor Table: [OK]\n");
 }
 #endif
