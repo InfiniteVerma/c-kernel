@@ -1,5 +1,6 @@
 #include <kernel/gdt.h>
 #include <kernel/panic.h>
+#include <stdio.h>
 #ifdef TEST
 #include <stdio.h>
 #endif
@@ -70,13 +71,13 @@ static void set_a(struct AccessByte* access_byte, const uint8_t val) {
 static const uint8_t get_binary_from_access_byte(const struct AccessByte access_byte) {
     uint8_t ret = 0;
 
-    ret |= access_byte.a;
-    ret |= (access_byte.rw << 1);
-    ret |= (access_byte.dc << 2);
-    ret |= (access_byte.e << 3);
-    ret |= (access_byte.s << 4);
-    ret |= (access_byte.dpl << 5);
-    ret |= (access_byte.p < 7);
+    ret |= (access_byte.a     << 0);  // Accessed
+    ret |= (access_byte.rw    << 1);  // Readable/Writable
+    ret |= (access_byte.dc    << 2);  // Direction/Conforming
+    ret |= (access_byte.e     << 3);  // Executable
+    ret |= (access_byte.s     << 4);  // Descriptor type
+    ret |= ((access_byte.dpl & 0x3) << 5);  // DPL (2 bits)
+    ret |= (access_byte.p     << 7);  // Present
 
     return ret;
 }
@@ -124,7 +125,7 @@ static void fill_gdt_vals(uint64_t* segments) {
     set_s(&code_access_byte, 1);
     set_e(&code_access_byte, 1);
     set_dc(&code_access_byte, 0);
-    set_rw(&code_access_byte, 0);
+    set_rw(&code_access_byte, 1);
     set_a(&code_access_byte, 1);
 
     uint16_t flags = 0x1100;
@@ -141,6 +142,8 @@ static void fill_gdt_vals(uint64_t* segments) {
     set_dc(&data_access_byte, 0);
     set_rw(&data_access_byte, 1);
     set_a(&data_access_byte, 1);
+    
+    printf("data_access_byte: %d\n", get_binary_from_access_byte(data_access_byte));
 
     flags = 0x1100;
     flags = (flags << 12);
@@ -152,6 +155,7 @@ static void fill_gdt_vals(uint64_t* segments) {
     segments[0] = null_segment;
     segments[1] = code_segment;
     segments[2] = data_segment;
+    printf("Loading null: %d\ndcode: %d\ndata: %d\n", null_segment, code_segment, data_segment);
 }
 
 void init_gdt() {
@@ -168,6 +172,17 @@ void init_gdt() {
         :  // No output operands
         : "r" (&gdtr) : "memory"
     );
+
+    printf("Printing from addr:\n");
+    printf("GDT Limit: 0x%x\n", gdtr.limit);
+    printf("GDT Base Addr: 0x%d\n", gdtr.base);
+}
+
+void read_gdt() {
+    GDTDescriptor gdtr;
+    __asm__ volatile ("sgdt %0" : "=m" (gdtr));
+    printf("GDT Limit: 0x%x\n", gdtr.limit);
+    printf("GDT Base Addr: 0x%d\n", gdtr.base);
 }
 
 #ifdef TEST
@@ -249,11 +264,26 @@ static void test_insert_limit() {
     assert(ret == exp, "test_insert_limit FAILED");
 }
 
+static void test_get_binary_from_access_byte() {
+    struct AccessByte code_access_byte;
+    set_p(&code_access_byte, 1);
+    set_dpl(&code_access_byte, 0);
+    set_s(&code_access_byte, 1);
+    set_e(&code_access_byte, 1);
+    set_dc(&code_access_byte, 0);
+    set_rw(&code_access_byte, 1);
+    set_a(&code_access_byte, 0);
+
+    uint8_t ret = get_binary_from_access_byte(code_access_byte);
+    assert(ret == 0x9A, "test_get_binary_from_access_byte FAILED");
+}
+
 void run_gdt_tests() {
     test_basic_parsing();
     test_create_descriptor();
     test_insert_base();
     test_insert_limit();
+    test_get_binary_from_access_byte();
     printf("Global Descriptor Table: [OK]\n");
 }
 #endif

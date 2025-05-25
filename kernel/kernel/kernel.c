@@ -22,8 +22,11 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 #endif
     initialize_free_segments(mbd);
     configure_rtc();
+    printf("reading before lgdt done\n");
+    read_gdt();
     init_gdt();
-    printf("lgdt done");
+    printf("reading after lgdt\n");
+    read_gdt();
 
 #ifdef TEST
     printf("Starting tests\n");
