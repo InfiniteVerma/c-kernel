@@ -44,6 +44,16 @@ _start:
 .type get_esp, @function
 get_esp:
     mov %esp,%eax
-    ret
+
+.global reload_CS
+.type reload_CS, @function
+reload_CS:
+    mov $0x10, %eax
+    mov %eax, %ds
+    mov %eax, %es
+    mov %eax, %fs
+    mov %eax, %gs
+    mov %eax, %ss
+    jmp after_kernel_init
 
 .size _start, . - _start

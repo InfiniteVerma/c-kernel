@@ -161,9 +161,12 @@ static void fill_gdt_vals() {
 
     const uint64_t null_segment = 0;
 
-    gdt[0] = null_segment;
-    gdt[1] = code_segment;
-    gdt[2] = data_segment;
+    //gdt[0] = null_segment;
+    //gdt[1] = code_segment;
+    //gdt[2] = data_segment;
+    gdt[0] = 0x0000000000000000;
+    gdt[1] = 0x00CF9A000000FFFF;
+    gdt[2] = 0x00CF92000000FFFF;
     assert(code_segment != 0, "code_Segment is zero!");
     printf("Loading null: %x\ncode: %x\ndata: %x\n", null_segment, code_segment, data_segment);
 }
@@ -175,10 +178,15 @@ void init_gdt() {
     gdtr.limit = sizeof(gdt) - 1;
     gdtr.base = (uint64_t)gdt;
 
-    asm volatile("lgdt (%0)"
-                 :  // No output operands
-                 : "r"(&gdtr)
-                 : "memory");
+    asm volatile(
+            "cli\n\t"
+            "lgdt (%0)\n\t"
+            //"jmp reload_CS\n\t"
+            "ljmp $0x08, $reload_CS\n\t"
+            "sti\n\t"
+            :  // No output operands
+            : "r"(&gdtr)
+            : "memory");
 }
 
 void read_gdt() {
@@ -247,6 +255,7 @@ static void test_create_descriptor() {
     ret = create_descriptor(0, 0, 0);
     assert(ret == 0, "Failed test 1");
     ret = create_descriptor(0, 0x000FFFFF, (GDT_CODE_PL0));
+    printf("Expected: %x, Got: %x", 0x00CF9A000000FFFF, ret);
     assert(ret == 0x00CF9A000000FFFF, "Failed test 2");
     ret = create_descriptor(0, 0x000FFFFF, (GDT_DATA_PL0));
     assert(ret == 0x00CF92000000FFFF, "Failed test 3");
