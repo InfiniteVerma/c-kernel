@@ -17,7 +17,7 @@ export LIBDIR := $(EXEC_PREFIX)/lib
 export INCLUDEDIR = $(PREFIX)/include
 
 #export CFLAGS := -O2 -g
-export CFLAGS := -g
+export CFLAGS := -g -mgeneral-regs-only
 export CPPFLAGS := 
 export CC := $(CC) --sysroot=$(SYSROOT)
 

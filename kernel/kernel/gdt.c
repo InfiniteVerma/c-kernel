@@ -1,9 +1,6 @@
 #include <kernel/gdt.h>
 #include <kernel/panic.h>
 #include <stdio.h>
-#ifdef TEST
-#include <stdio.h>
-#endif
 
 #define FLAGS 1100
 
@@ -138,7 +135,7 @@ static void fill_gdt_vals() {
     set_s(&code_access_byte, 1);
     set_e(&code_access_byte, 1);
     set_dc(&code_access_byte, 0);
-    set_rw(&code_access_byte, 1);
+    set_rw(&code_access_byte, 0);
     set_a(&code_access_byte, 1);
 
     uint16_t flags = (0x1101 << 8) | get_binary_from_access_byte(code_access_byte);
@@ -161,6 +158,7 @@ static void fill_gdt_vals() {
 
     const uint64_t null_segment = 0;
 
+    // TODO buggy
     //gdt[0] = null_segment;
     //gdt[1] = code_segment;
     //gdt[2] = data_segment;
@@ -181,7 +179,6 @@ void init_gdt() {
     asm volatile(
             "cli\n\t"
             "lgdt (%0)\n\t"
-            //"jmp reload_CS\n\t"
             "ljmp $0x08, $1f\n\t" // using inline 1j preserves stack frame. Using $reload_CS like in tutorial does not
             "1:\n\t"
             "mov $0x10, %%eax\n\t"
@@ -190,7 +187,6 @@ void init_gdt() {
             "mov %%eax, %%fs\n\t"
             "mov %%eax, %%gs\n\t"
             "mov %%eax, %%ss\n\t"
-            "sti\n\t"
             :  // No output operands
             : "r"(&gdtr)
             : "memory");
@@ -203,7 +199,7 @@ void read_gdt() {
 
     uint64_t* gdt_tmp = (uint64_t*)(gdtr.base);
     printf("GDT Limit: 0x%x\n", gdtr.limit);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i <= gdtr.limit / 8; i++) {
         printf("i: %d. val: %x\n", i, gdt_tmp[i]);
     }
 }
