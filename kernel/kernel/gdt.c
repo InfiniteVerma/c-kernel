@@ -182,7 +182,14 @@ void init_gdt() {
             "cli\n\t"
             "lgdt (%0)\n\t"
             //"jmp reload_CS\n\t"
-            "ljmp $0x08, $reload_CS\n\t"
+            "ljmp $0x08, $1f\n\t" // using inline 1j preserves stack frame. Using $reload_CS like in tutorial does not
+            "1:\n\t"
+            "mov $0x10, %%eax\n\t"
+            "mov %%eax, %%ds\n\t"
+            "mov %%eax, %%es\n\t"
+            "mov %%eax, %%fs\n\t"
+            "mov %%eax, %%gs\n\t"
+            "mov %%eax, %%ss\n\t"
             "sti\n\t"
             :  // No output operands
             : "r"(&gdtr)
