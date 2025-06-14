@@ -1,5 +1,6 @@
 #include <kernel/allocator.h>
 #include <kernel/gdt.h>
+#include <kernel/interrupts.h>
 #include <kernel/io/rtc.h>
 #include <kernel/io/uart.h>
 #include <kernel/multiboot.h>
@@ -27,11 +28,13 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     printf("After gdt!\n");
     printf("reading after lgdt\n");
     read_gdt();
+    init_idt();
 
 #ifdef TEST
     printf("Starting tests\n");
     run_allocator_tests();
-    run_gdt_tests();
+    //run_gdt_tests(); TODO
+    run_idt_tests();
 #endif
 
     struct DateTime date_time = get_date_time();

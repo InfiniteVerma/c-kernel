@@ -32,6 +32,7 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
 kernel/gdt.o \
+kernel/interrupts.o \
 kernel/multiboot.o \
 kernel/allocator.o \
 kernel/panic.o \
