@@ -10,7 +10,8 @@
 ### Clock/Interrupts
  
  - [x] RTC clock
- - [ ] GDT
+ - [x] GDT
+ - [x] IDT
 
 ### Process Management
  - [ ] PCB
