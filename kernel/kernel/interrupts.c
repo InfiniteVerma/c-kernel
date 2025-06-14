@@ -62,7 +62,7 @@ void init_idt() {
     asm volatile(
             "lidt (%0)\n\t"
             "sti\n\t"
-            "int $12\n\t"
+            "int $13\n\t"
             :
             : "r" (&idt)
             : "memory"
