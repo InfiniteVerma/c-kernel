@@ -48,8 +48,9 @@ static const char* int_to_hex_char(unsigned long long inp) {
     return msg;
 }
 
-// TODO do negative
 static const char* to_str(int val) {
+    bool isNeg = val < 0;
+    if(isNeg) val = -1 * val;
 
     int tmp = val;
     int i = 0;
@@ -62,6 +63,10 @@ static const char* to_str(int val) {
     while(tmp) {
         msg[i] = tmp % 10 + '0';
         tmp /= 10;
+        i++;
+    }
+    if(isNeg) {
+        msg[i] = '-';
         i++;
     }
     msg[i] = '\0';

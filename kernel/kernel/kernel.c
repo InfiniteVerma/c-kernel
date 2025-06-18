@@ -7,6 +7,7 @@
 #include <kernel/panic.h>
 #include <kernel/tty.h>
 #include <stdio.h>
+#include "kernel/spinlock.h"
 
 extern unsigned int get_esp();
 
@@ -30,12 +31,8 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     read_gdt();
     init_idt();
 
-#ifdef TEST
-    printf("Starting tests\n");
-    run_allocator_tests();
-    //run_gdt_tests(); TODO
-    run_idt_tests();
-#endif
+    spinlock_t lock;
+    lock.locked = 0;
 
     struct DateTime date_time = get_date_time();
     print_date_time(date_time);
@@ -47,6 +44,11 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     // date_time = get_date_time();
     // print_date_time(date_time);
 #ifdef TEST
+    printf("Starting tests\n");
+    run_allocator_tests();
+    //run_gdt_tests(); TODO
+    run_idt_tests();
+    run_spinlock_tests();
     exit_(0);
 #endif
 }

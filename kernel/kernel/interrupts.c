@@ -5,7 +5,6 @@
 GateDescriptor interruptTable[256] = {0};
 
 uint64_t generate_gd_entry(GateDescriptorNewArgs arg) {
-    // first validate arg
     assert(arg.dpl <= (1 << 2), "arg.dpl should be <= 2 bits");
     assert(arg.gate <= (1 << 4), "arg.gate should be <= 4 bits");
 
