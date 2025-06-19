@@ -1,5 +1,6 @@
 #include <kernel/io/rtc.h>
 #include <stdio.h>
+#include <utils.h>
 
 #define NMI_disable_bit 1
 #define selected_cmos_register_number 0x0F
@@ -106,8 +107,22 @@ void configure_rtc() {
 }
 
 void print_date_time(struct DateTime d) {
-    printf("DateTime { seconds: %d, minutes: %d, hours: %d, day_of_month: %d, month: %d, year: %d, century: %d }\n",
+    LOG("DateTime { seconds: %d, minutes: %d, hours: %d, day_of_month: %d, month: %d, year: %d, century: %d }\n",
             d.seconds, d.minutes, d.hours, d.day_of_month, d.month, d.year, d.century);
-    //printf("DateTime { seconds: %d, minutes: %d, hours: %d, week_day: %d, day_of_month: %d,\nmonth: %d, year: %d, century: %d }\n", FIXME: fix overflow issue
-    //        d.seconds, d.minutes, d.hours, d.week_day, d.day_of_month, d.month, d.year, d.century);
+}
+
+static int get_timestamp_wrapper(char* buffer, int size, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    size = vsnprintf(buffer, size, fmt, args);
+    va_end(args);
+    return size;
+}
+
+// [2025-05-30T07:30:28+0530]
+int get_timestamp(char* buffer) {
+    struct DateTime d = get_date_time();
+    va_list args;
+    printf("seconds: <%d>\n", d.seconds);
+    return get_timestamp_wrapper(buffer, 100, "[%d%d-%d-%dT%d:%d:%d]  ", d.century, d.year, d.month, d.hours, d.minutes, d.seconds);
 }

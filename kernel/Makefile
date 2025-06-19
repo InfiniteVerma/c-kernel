@@ -33,6 +33,7 @@ $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
 kernel/gdt.o \
 kernel/spinlock.o \
+kernel/circular_buffer.o \
 kernel/interrupts.o \
 kernel/multiboot.o \
 kernel/allocator.o \
