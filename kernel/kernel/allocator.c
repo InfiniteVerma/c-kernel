@@ -4,6 +4,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<stdint.h>
+#include <utils.h>
 
 struct FreeSegment* freeSegment = NULL;
 extern unsigned long KERNEL_START;
@@ -16,7 +17,7 @@ static void merge_segments(struct FreeSegment*, struct FreeSegment*);
 
 void initialize_free_segments(multiboot_info_t* mbd) {
 #ifdef DEBUG
-    printf("initialize_free_segments START\n");
+    LOG("initialize_free_segments START");
 #endif
 
     assert(sizeof(struct FreeSegment) == sizeof(struct AllocatedSegment), "FreeSegment and AllocatedSegment struct sizes are different!");
@@ -34,7 +35,7 @@ void initialize_free_segments(multiboot_info_t* mbd) {
 
         if((uintptr_t)mmmt->addr == (uintptr_t)&KERNEL_START) {
 #ifdef DEBUG
-            printf("FOUND MATCHING: Size: %u : Addr: 0x%x : Len %lluK : Type %u\n", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
+            LOG("FOUND MATCHING: Size: %u : Addr: 0x%x : Len %lluK : Type %u", mmmt->size, mmmt->addr, mmmt->len / 1024, mmmt->type);
 #endif
             entry.size = mmmt->size;
             entry.addr = mmmt->addr;
@@ -54,7 +55,7 @@ void initialize_free_segments(multiboot_info_t* mbd) {
     freeSegment->size = big_block_size;
     freeSegment->next_segment = NULL;
 #ifdef DEBUG
-    printf("Free memory: %d\n", freeSegment->size);
+    LOG("Free memory: %d", freeSegment->size);
 #endif
 }
 
@@ -148,12 +149,12 @@ int FreeSegment_equals(const struct FreeSegment *a, const struct FreeSegment *b)
 }
 
 void FreeSegment_print(const struct FreeSegment *a) {
-    printf("FreeSegment: ");
+    LOG("FreeSegment: ");
     if(!a) {
-        printf("NULL\n");
+        LOG("NULL");
         return;
     }
-    printf("Size: %d", a->size);
+    LOG("Size: %d", a->size);
 }
 
 // TODO make this usable by any all linked lists?
@@ -198,6 +199,6 @@ static void test_1() {
 
 void run_allocator_tests() {
     test_1();
-    printf("Allocator: [OK]\n");
+    LOG_GREEN("Allocator: [OK]");
 }
 #endif

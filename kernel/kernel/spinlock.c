@@ -2,6 +2,7 @@
 #include <kernel/panic.h>
 #ifdef TEST
 #include <stdio.h>
+#include <utils.h>
 #endif
 
 // TODO make a utils?
@@ -57,6 +58,6 @@ void test_atomic_set() {
 }
 void run_spinlock_tests() {
     test_atomic_set();
-    printf("Spinlock Tests: [OK]\n");
+    LOG_GREEN("Spinlock Tests: [OK]");
 }
 #endif

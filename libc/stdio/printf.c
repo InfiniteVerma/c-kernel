@@ -15,67 +15,6 @@ static bool print(const char* data, size_t length) {
 	return true;
 }
 
-static void reverse(int len) {
-    int start = 0;
-    int end = len - 1; 
-    while(start < end) {
-        char c = msg[start];
-        msg[start] = msg[end];
-        msg[end] = c;
-        start++;
-        end--;
-    }
-}
-
-static const char* int_to_hex_char(unsigned long long inp) {
-    int i = 0;
-    memset(msg, 0, sizeof(msg));
-    if(inp == 0) {
-        msg[0] = '0';
-        msg[1] = '\0';
-        return msg;
-    }
-    while(inp) {
-        if (inp % 16 < 10) {
-            msg[i] = (inp % 16) + '0';  // For digits 0-9
-        } else {
-            msg[i] = (inp % 16) - 10 + 'a';  // For characters a-f
-        }
-        i++;
-        inp /= 16;
-    }
-    msg[i] = '\0';
-    reverse(i);
-
-    return msg;
-}
-
-static const char* to_str(int val) {
-    bool isNeg = val < 0;
-    if(isNeg) val = -1 * val;
-
-    int tmp = val;
-    int i = 0;
-    memset(msg, 0, sizeof(msg));
-    if(val == 0) {
-        msg[0] = '0';
-        msg[1] = '\0';
-        return msg;
-    }
-    while(tmp) {
-        msg[i] = tmp % 10 + '0';
-        tmp /= 10;
-        i++;
-    }
-    if(isNeg) {
-        msg[i] = '-';
-        i++;
-    }
-    msg[i] = '\0';
-    reverse(i);
-    return msg;
-}
-
 int printf(const char* restrict format, ...) {
 	va_list parameters;
 	va_start(parameters, format);
@@ -128,7 +67,7 @@ int printf(const char* restrict format, ...) {
 		} else if (*format == 'd') {
             format++;
             int x = va_arg(parameters, int);
-            const char* msg = to_str(x);
+            const char* msg = to_str(msg, x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -140,7 +79,7 @@ int printf(const char* restrict format, ...) {
         } else if (*format == 'u') {
             format++;
             unsigned int x = va_arg(parameters, unsigned int);
-            const char* msg = to_str(x);
+            const char* msg = to_str(msg, x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -152,7 +91,7 @@ int printf(const char* restrict format, ...) {
         } else if (*format == 'x') { // hex
             format++;
             unsigned long long x = va_arg(parameters, unsigned long long); // TODO?
-            const char* msg = int_to_hex_char(x);
+            const char* msg = int_to_hex_char(msg, x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -164,7 +103,7 @@ int printf(const char* restrict format, ...) {
         } else if(memcmp(format, "llu", 3) == 0) {
             format+=3;
             unsigned long long x = va_arg(parameters, unsigned long long);
-            const char* msg = to_str(x);
+            const char* msg = to_str(msg, x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -176,7 +115,7 @@ int printf(const char* restrict format, ...) {
         } else if(memcmp(format, "lu", 2) == 0) {
             format+=2;
             unsigned long x = va_arg(parameters, unsigned long);
-            const char* msg = to_str(x);
+            const char* msg = to_str(msg, x);
 			size_t len = strlen(msg);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -230,13 +169,24 @@ int vsnprintf(char* buffer, size_t bufsz, const char* fmt, va_list vlist) {
                 }
                 case 'd': {
                               int i = va_arg(vlist, int);
-                              const char* s = to_str(i);
+                              const char* s = to_str(msg, i);
                               int charsToWrite = min((int)strlen(s), bufsz - bufIdx - 1);
                               memcpy(buffer + bufIdx, s,  charsToWrite);
                               bufIdx = bufIdx + charsToWrite;
                               break;
                 }
-                default: panic("Unsupported vsnprintf\n");
+                case 'x': {
+                              unsigned long long i = va_arg(vlist, unsigned long long);
+                              const char* s = int_to_hex_char(msg, i);
+                              int charsToWrite = min((int)strlen(s), bufsz - bufIdx - 1);
+                              memcpy(buffer + bufIdx, s,  charsToWrite);
+                              bufIdx = bufIdx + charsToWrite;
+                              break;
+                }
+                default: {
+                             printf("Unsupported char: %c\n", fmt[fmtIdx]);
+                             panic("Unsupported vsnprintf\n");
+                         }
             }
             fmtIdx++;
         }
@@ -249,29 +199,6 @@ int vsnprintf(char* buffer, size_t bufsz, const char* fmt, va_list vlist) {
 #ifdef TEST
 void test_printf() {
     memset(msg, 0, sizeof(msg));
-}
-
-void test_reverse() {
-    char copy[100];
-    memcpy(copy, msg, sizeof(msg));
-
-    memset(msg, 0, sizeof(msg));
-
-    char test[4] = "123";
-    char test_reverse[4] = "321";
-    memcpy(msg, test, sizeof(test));
-    reverse(sizeof(test) - 1);
-
-    assert(memcmp(msg, test_reverse, sizeof(test)) == 0, "test_reverse FAILED");
-
-    memcpy(msg, copy, sizeof(msg));
-}
-
-void test_to_str() {
-    assert(memcmp("123", to_str(123), sizeof("123")) == 0, "test_to_str FAILED");
-    assert(memcmp("1", to_str(2), sizeof("1")) != 0, "test_to_str FAILED");
-    assert(memcmp("-1", to_str(-1), sizeof("-1")) == 0, "test_to_str FAILED");
-    assert(memcmp("-134", to_str(-134), sizeof("-134")) == 0, "test_to_str FAILED");
 }
 
 const char* test_vsnprintf_fn(int* outSize, const char* msg, int bufSize, const char* fmt, ...) {
@@ -323,9 +250,7 @@ void test_vsnprintf() {
 
 void run_stdio_tests() {
     test_printf();
-    test_reverse();
-    test_to_str();
     test_vsnprintf();
-    printf("Stdio: [OK]\n");
+    LOG_GREEN("Stdio: [OK]");
 }
 #endif

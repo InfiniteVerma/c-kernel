@@ -123,6 +123,5 @@ static int get_timestamp_wrapper(char* buffer, int size, const char* fmt, ...) {
 int get_timestamp(char* buffer) {
     struct DateTime d = get_date_time();
     va_list args;
-    printf("seconds: <%d>\n", d.seconds);
     return get_timestamp_wrapper(buffer, 100, "[%d%d-%d-%dT%d:%d:%d]  ", d.century, d.year, d.month, d.hours, d.minutes, d.seconds);
 }

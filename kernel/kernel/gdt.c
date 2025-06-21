@@ -1,6 +1,7 @@
 #include <kernel/gdt.h>
 #include <kernel/panic.h>
 #include <stdio.h>
+#include <utils.h>
 
 #define FLAGS 1100
 
@@ -151,7 +152,7 @@ static void fill_gdt_vals() {
     set_rw(&data_access_byte, 1);
     set_a(&data_access_byte, 1);
 
-    // printf("data_access_byte: %d\n", get_binary_from_access_byte(data_access_byte));
+    // LOG("data_access_byte: %d\n", get_binary_from_access_byte(data_access_byte));
 
     flags = (0x1101 << 8) | get_binary_from_access_byte(data_access_byte);
     const uint64_t data_segment = create_descriptor(0, 0xffffffff, flags);
@@ -166,7 +167,7 @@ static void fill_gdt_vals() {
     gdt[1] = 0x00CF9A000000FFFF;
     gdt[2] = 0x00CF92000000FFFF;
     assert(code_segment != 0, "code_Segment is zero!");
-    printf("Loading null: %x\ncode: %x\ndata: %x\n", null_segment, code_segment, data_segment);
+    LOG("Loading null: %x - code: %x - data: %x", null_segment, code_segment, data_segment);
 }
 
 void init_gdt() {
@@ -193,14 +194,14 @@ void init_gdt() {
 }
 
 void read_gdt() {
-    printf("read_gdt BEGIN\n");
+    LOG("read_gdt BEGIN");
     GDTDescriptor gdtr;
     asm volatile("sgdt %0" : "=m"(gdtr));
 
     uint64_t* gdt_tmp = (uint64_t*)(gdtr.base);
-    printf("GDT Limit: 0x%x\n", gdtr.limit);
+    LOG("GDT Limit: 0x%x", gdtr.limit);
     for (int i = 0; i <= gdtr.limit / 8; i++) {
-        printf("i: %d. val: %x\n", i, gdt_tmp[i]);
+        LOG("i: %d. val: %x", i, gdt_tmp[i]);
     }
 }
 
@@ -258,7 +259,7 @@ static void test_create_descriptor() {
     ret = create_descriptor(0, 0, 0);
     assert(ret == 0, "Failed test 1");
     ret = create_descriptor(0, 0x000FFFFF, (GDT_CODE_PL0));
-    printf("Expected: %x, Got: %x", 0x00CF9A000000FFFF, ret);
+    LOG("Expected: %x, Got: %x", 0x00CF9A000000FFFF, ret);
     assert(ret == 0x00CF9A000000FFFF, "Failed test 2");
     ret = create_descriptor(0, 0x000FFFFF, (GDT_DATA_PL0));
     assert(ret == 0x00CF92000000FFFF, "Failed test 3");
@@ -304,6 +305,6 @@ void run_gdt_tests() {
     test_insert_base();
     test_insert_limit();
     test_get_binary_from_access_byte();
-    printf("Global Descriptor Table: [OK]\n");
+    LOG("Global Descriptor Table: [OK]");
 }
 #endif

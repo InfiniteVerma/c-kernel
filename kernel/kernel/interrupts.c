@@ -1,6 +1,8 @@
 #include <kernel/interrupts.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <kernel/io/uart.h>
+#include <utils.h>
 
 GateDescriptor interruptTable[256] = {0};
 
@@ -27,13 +29,13 @@ uint64_t generate_gd_entry(GateDescriptorNewArgs arg) {
 
 struct interrupt_frame;
 
-__attribute__((interrupt)) void interrupt_handler(struct interrupt_frame* frame)
+__attribute__((interrupt)) void interrupt_handler(struct interrupt_frame* frame, unsigned long errorCode)
 {
-    printf("INTERRUPT!!!\n");
+    LOG("INTERRUPT err: %d", errorCode);
 }
 
 void init_idt() {
-    printf("Initializing IDT\n");
+    LOG("Initializing IDT");
 
     GateDescriptor gd;
     GateDescriptorNewArgs arg;
@@ -43,7 +45,7 @@ void init_idt() {
     outb(0xA1, 0xff);
 
     arg.offset = (uint32_t)(&interrupt_handler);
-    arg.segment_selector = 0x08;
+    arg.segment_selector = 0x8;
     arg.gate = 0b1111;
     arg.dpl = 0;
     arg.p = 1;
@@ -57,11 +59,11 @@ void init_idt() {
     idt.offset = (uint32_t)interruptTable;
 
     read_idt();
-    printf("Loading data: size: %d, offset: %d\n", idt.size, idt.offset);
+    LOG("Loading data: size: %d, offset: %d", idt.size, idt.offset);
     asm volatile(
             "lidt (%0)\n\t"
             "sti\n\t"
-            "int $13\n\t"
+            //"int $13\n\t"
             :
             : "r" (&idt)
             : "memory"
@@ -70,13 +72,13 @@ void init_idt() {
 }
 
 void read_idt() {
-    printf("read_idt BEGIN\n");
+    LOG("read_idt BEGIN");
     Idt idt;
     idt.size = 1;
     asm volatile("sidt %0" : "=m"(idt));
     assert(idt.size != 1, "ERROR, sidt did not work properly");
 
-    printf("Size: %d - Offset: %d\n", idt.size, idt.offset);
+    LOG("Size: %d - Offset: %d", idt.size, idt.offset);
 }
 
 #ifdef TEST
@@ -93,6 +95,6 @@ void test_basic() {
 
 void run_idt_tests() {
     test_basic();
-    printf("Interrupt Descriptor Table: [OK]\n");
+    LOG_GREEN("Interrupt Descriptor Table: [OK]");
 }
 #endif
