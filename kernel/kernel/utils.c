@@ -67,6 +67,18 @@ const char* int_to_hex_char(char msg[100], unsigned long long inp) {
     return msg;
 }
 
+void outb(uint16_t port, uint8_t value) {
+    asm volatile("outb %0, %1"
+                 :  // No output operands
+                 : "a"(value), "Nd"(port));
+}
+
+uint8_t inb(uint16_t port) {
+    uint8_t value;
+    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
 #ifdef TEST
 char test_arr[100];
 void test_reverse() {

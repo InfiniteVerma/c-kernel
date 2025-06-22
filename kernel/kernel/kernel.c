@@ -7,6 +7,7 @@
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
 #include <kernel/tty.h>
+#include <unistd.h>
 #include <utils.h>
 
 #ifdef TEST
@@ -42,6 +43,13 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     struct DateTime date_time = get_date_time();
     print_date_time(date_time);
 
+#ifndef TEST
+    LOG("Sleeping for 4 seconds");
+    dump_buffer();
+    sleep(4);
+    LOG("Waking up");
+#endif
+
     // date_time.hours -= 1;
     // set_date_time(date_time);
 
@@ -56,6 +64,7 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     // run_gdt_tests(); TODO
     run_idt_tests();
     run_spinlock_tests();
+    run_rtc_tests();
 #endif
 
     dump_buffer();

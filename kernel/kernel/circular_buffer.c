@@ -91,6 +91,7 @@ int write_to_buffer(const char* fmt, const char* level, const char* file_name, i
 void dump_buffer() {
     for (int i = 0; i < tail; i++) {
         printf("%s\n", BUFFER[i]);
+        memset(BUFFER[i], 0, strlen(BUFFER[i]));
     }
     tail = 0;
 }

@@ -2,6 +2,7 @@
 #define __UTILS__
 
 #include <kernel/circular_buffer.h>
+#include <stdint.h>
 
 #define GREEN "\033[32m"
 #define RESET "\033[0m"
@@ -15,7 +16,8 @@
 const char* to_str(char msg[100], int);
 const char* int_to_hex_char(char msg[100], unsigned long long inp);
 void reverse(char msg[100], int len);
-
+void outb(uint16_t port, uint8_t value);
+uint8_t inb(uint16_t port);
 void run_utils_tests();
 
 #endif

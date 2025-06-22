@@ -11,7 +11,6 @@
 #define PIC1_DATA (PIC1 + 1)
 #define PIC2_COMMAND PIC2
 #define PIC2_DATA (PIC2 + 1)
-#define PIC_EOI 0x20
 
 #define ICW1_ICW4 0x01      /* Indicates that ICW4 will be present */
 #define ICW1_SINGLE 0x02    /* Single (cascade) mode */
@@ -35,9 +34,13 @@ static void PIC_remap(int offset1, int offset2) {
     outb(PIC2_DATA, 2);  // ICW3: tell Slave PIC its cascade identity (0000 0010)
     outb(PIC1_DATA, ICW4_8086);  // ICW4: have the PICs use 8086 mode (and not 8080 mode)
     outb(PIC2_DATA, ICW4_8086);
+
+    outb(PIC1_DATA, 0xff);
+    outb(PIC2_DATA, 0xff);
 }
 
 static void PIC_sendEOI(uint8_t irq) {
+    const uint32_t PIC_EOI = 0x20;
     if (irq >= 8) outb(PIC2_COMMAND, PIC_EOI);
 
     outb(PIC1_COMMAND, PIC_EOI);
@@ -68,7 +71,7 @@ typedef __attribute__((interrupt)) void (*InterruptHandlerFuncErrNo)(struct inte
                                                                      unsigned int);
 
 GateDescriptor interruptTable[256] = {0};
-InterruptFunc interruptList[256] = {0};
+InterruptFunc interruptList[256] = {0};  // TODO multithreaeded
 
 uint64_t generate_gd_entry(GateDescriptorNewArgs arg) {
     assert(arg.dpl <= (1 << 2), "arg.dpl should be <= 2 bits");
@@ -86,22 +89,24 @@ uint64_t generate_gd_entry(GateDescriptorNewArgs arg) {
     return ret;
 }
 
-//uint8_t* ip = (uint8_t*)frame->instruction_pointer; \
-        //frame->instruction_pointer += 2; \
-
-#define DEFINE_INTERRUPT_HDLR_ERRNO(num)                                                   \
-    __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame, \
-                                                            unsigned int error_code) {     \
-        LOG("Inside interrupt handler " #num " - sip: 0x%x - errCode: %d",                 \
-            frame->instruction_pointer, error_code);                                       \
-        if (interruptList[num] != NULL) interruptList[num]();                              \
-        PIC_sendEOI(PIC_remove_offset(num));                                               \
+#define DEFINE_INTERRUPT_HDLR_ERRNO(num)                                                    \
+    __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame,  \
+                                                            unsigned int error_code) {      \
+        if (interruptList[num] != NULL)                                                     \
+            interruptList[num]();                                                           \
+        else                                                                                \
+            printf("unhandled Inside interrupt handler " #num " - sip: 0x%x - errCode: %d", \
+                   frame->instruction_pointer, error_code);                                 \
+        PIC_sendEOI(PIC_remove_offset(num));                                                \
     }
 
 #define DEFINE_INTERRUPT_HDLR(num)                                                           \
     __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame) { \
-        LOG("Inside interrupt handler " #num " - sip: 0x%x", frame->instruction_pointer);    \
-        if (interruptList[num] != NULL) interruptList[num]();                                \
+        if (interruptList[num] != NULL)                                                      \
+            interruptList[num]();                                                            \
+        else                                                                                 \
+            printf("unhandled interrupt handler " #num " - sip: 0x%x",                       \
+                   frame->instruction_pointer);                                              \
         PIC_sendEOI(PIC_remove_offset(num));                                                 \
     }
 
@@ -668,8 +673,6 @@ void init_idt() {
         : "r"(&idt)
         : "memory");
 
-    outb(PIC1_DATA, 0xff);
-    outb(PIC2_DATA, 0xff);
     read_idt();
 }
 

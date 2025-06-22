@@ -2,21 +2,14 @@
 #include <kernel/io/rtc.h>
 #include <stdio.h>
 #include <utils.h>
+#ifdef TEST
+#include <unistd.h>
+#endif
 
 #define NMI_disable_bit 1
 #define selected_cmos_register_number 0x0F
 
-static void outb(uint16_t port, uint8_t value) {
-    asm volatile("outb %0, %1"
-                 :  // No output operands
-                 : "a"(value), "Nd"(port));
-}
-
-static uint8_t inb(uint16_t port) {
-    uint8_t value;
-    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
+uint32_t tick = 0;
 
 static void disable_cmos_nmi() {
     uint8_t value = (NMI_disable_bit << 7) | selected_cmos_register_number;
@@ -130,16 +123,37 @@ static void configure_rtc_interrupts() {
     char prev = inb(CMOS_DATA_REG);
     outb(CMOS_CONTROL_REG, 0x8B);
     outb(CMOS_DATA_REG, prev | 0x40);
+    write_cmos_register(0xA, 1);  // set frequency to 256 Hz (MC146818)
 }
 
-void rtc_ack_int() {
+void process_rtc_interrupt() {
+    tick++;
     outb(CMOS_CONTROL_REG, 0x0C);
     inb(CMOS_DATA_REG);
+}
+
+uint32_t get_tick() {
+    return tick;
 }
 
 void register_rtc_driver() {
     asm volatile("cli");
     configure_rtc_interrupts();
-    register_interrupt(PIC_2_OFFSET, rtc_ack_int);
+    register_interrupt(PIC_2_OFFSET, process_rtc_interrupt);
     asm volatile("sti");
 }
+
+#ifdef TEST
+static void test_rtc_interrupts() {
+    uint32_t prev_tick = get_tick();
+    sleep(4);
+    uint32_t now_tick = get_tick();
+    uint8_t delta = 0;  // zero ticks error rate
+    assert((now_tick - prev_tick) / 256 <= 4 + delta, "sleep test failed");
+}
+
+void run_rtc_tests() {
+    test_rtc_interrupts();
+    LOG_GREEN("RTC: [OK]");
+}
+#endif

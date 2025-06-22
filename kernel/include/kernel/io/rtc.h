@@ -38,5 +38,8 @@ void configure_rtc();
 void register_rtc_driver();
 
 int get_timestamp(char*);
+uint32_t get_tick();
+
+void run_rtc_tests();
 
 #endif /* __RTC__ */

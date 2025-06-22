@@ -1,16 +1,7 @@
 #include <kernel/io/uart.h>
+#include <utils.h>
 
 #define PORT 0x3f8  // COM1
-
-void outb(uint16_t port, uint8_t byte) {
-    asm volatile("outb %0, %1" : : "a"(byte), "d"(port));
-}
-
-uint8_t inb(uint16_t port) {
-    uint8_t ret;
-    asm volatile("inb %1, %0" : "=a"(ret) : "d"(port));
-    return ret;
-}
 
 int init_serial() {
     outb(PORT + 1, 0x00);  // Disable all interrupts

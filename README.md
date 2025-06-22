@@ -55,3 +55,4 @@
  - osdev wiki
  - https://youtu.be/gBykJMqDqH0?feature=shared
  - https://www.felixcloutier.com/x86/
+ - RTC: https://www.nxp.com/docs/en/data-sheet/MC146818.pdf
