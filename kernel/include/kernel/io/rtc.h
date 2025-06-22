@@ -35,6 +35,7 @@ void print_date_time(struct DateTime);
 struct DateTime get_date_time();
 void set_date_time(struct DateTime);
 void configure_rtc();
+void register_rtc_driver();
 
 int get_timestamp(char*);
 

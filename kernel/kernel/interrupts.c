@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <kernel/io/uart.h>
+#include <kernel/io/rtc.h>
 #include <utils.h>
 
 #define PIC1		0x20		/* IO base address for master PIC */
@@ -10,6 +11,48 @@
 #define PIC1_DATA	(PIC1+1)
 #define PIC2_COMMAND	PIC2
 #define PIC2_DATA	(PIC2+1)
+#define PIC_EOI     0x20
+
+#define ICW1_ICW4	0x01		/* Indicates that ICW4 will be present */
+#define ICW1_SINGLE	0x02		/* Single (cascade) mode */
+#define ICW1_INTERVAL4	0x04		/* Call address interval 4 (8) */
+#define ICW1_LEVEL	0x08		/* Level triggered (edge) mode */
+#define ICW1_INIT	0x10		/* Initialization - required! */
+
+#define ICW4_8086	0x01		/* 8086/88 (MCS-80/85) mode */
+#define ICW4_AUTO	0x02		/* Auto (normal) EOI */
+#define ICW4_BUF_SLAVE	0x08		/* Buffered mode/slave */
+#define ICW4_BUF_MASTER	0x0C		/* Buffered mode/master */
+#define ICW4_SFNM	0x10		/* Special fully nested (not) */
+
+static void PIC_remap(int offset1, int offset2)
+{
+	outb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);  // starts the initialization sequence (in cascade mode)
+	outb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
+	outb(PIC1_DATA, offset1);                 // ICW2: Master PIC vector offset
+	outb(PIC2_DATA, offset2);                 // ICW2: Slave PIC vector offset
+	outb(PIC1_DATA, 4);                       // ICW3: tell Master PIC that there is a slave PIC at IRQ2 (0000 0100)
+	outb(PIC2_DATA, 2);                       // ICW3: tell Slave PIC its cascade identity (0000 0010)
+	outb(PIC1_DATA, ICW4_8086);               // ICW4: have the PICs use 8086 mode (and not 8080 mode)
+	outb(PIC2_DATA, ICW4_8086);
+}
+
+static void PIC_sendEOI(uint8_t irq)
+{
+	if(irq >= 8)
+		outb(PIC2_COMMAND, PIC_EOI);
+	
+	outb(PIC1_COMMAND, PIC_EOI);
+}
+
+static uint8_t PIC_remove_offset(uint32_t offset) {
+    uint8_t irq = 0;
+    if(offset >= PIC_2_OFFSET) irq = offset - PIC_2_OFFSET + 8;
+    else if(offset >= PIC_1_OFFSET) irq = offset - PIC_1_OFFSET;
+    else panic("offset issue!\n");
+
+    return irq;
+}
 
 struct interrupt_frame
 {
@@ -20,15 +63,6 @@ struct interrupt_frame
     uint32_t stack_segment;
 };
 
-//void print_interrupt_frame(struct interrupt_frame* frame) {
-//    LOG("instruction_pointer <0x%x>\n", (unsigned int)frame->instruction_pointer);
-//    //LOG("code_segment %d", frame->code_segment);
-//    //LOG("rflags %d", frame->rflags);
-//    //LOG("register_stack_pointer %d", frame->register_stack_pointer);
-//    //LOG("stack_segment %d", frame->stack_segment);
-//}
-
-typedef void (*InterruptFunc)(void);
 typedef __attribute__((interrupt)) void(*InterruptHandlerFunc)(struct interrupt_frame*);
 typedef __attribute__((interrupt)) void(*InterruptHandlerFuncErrNo)(struct interrupt_frame*, unsigned int);
 
@@ -51,19 +85,21 @@ uint64_t generate_gd_entry(GateDescriptorNewArgs arg) {
     return ret;
 }
 
-//__attribute__((interrupt)) void interrupt_handler_55(struct interrupt_frame* frame)
-//{
-//    printf("interrupt_handler_55\n");
-//}
-//
+        //uint8_t* ip = (uint8_t*)frame->instruction_pointer; \
+        //frame->instruction_pointer += 2; \
+
 #define DEFINE_INTERRUPT_HDLR_ERRNO(num) \
-    __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame, unsigned int){ \
-        LOG("Inside interrupt handler " #num " - sip: 0x%x", frame->instruction_pointer); \
+    __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame, unsigned int error_code){ \
+        LOG("Inside interrupt handler " #num " - sip: 0x%x - errCode: %d", frame->instruction_pointer, error_code); \
+        if(interruptList[num] != NULL) interruptList[num](); \
+        PIC_sendEOI(PIC_remove_offset(num)); \
     }
 
 #define DEFINE_INTERRUPT_HDLR(num) \
     __attribute__((interrupt)) void interrupt_handler_##num(struct interrupt_frame* frame) { \
         LOG("Inside interrupt handler " #num " - sip: 0x%x", frame->instruction_pointer); \
+        if(interruptList[num] != NULL) interruptList[num](); \
+        PIC_sendEOI(PIC_remove_offset(num)); \
     }
 
 DEFINE_INTERRUPT_HDLR(0)
@@ -329,6 +365,7 @@ void init_idt() {
     GateDescriptor gd;
     GateDescriptorNewArgs arg;
 
+    // TODO fix sizes. 256 array size is not needed
     InterruptHandlerFunc handlerFuncs[256] = {0};
     InterruptHandlerFuncErrNo handlerFuncsErrNo[256] = {0};
 
@@ -592,7 +629,13 @@ void init_idt() {
     outb(PIC1_DATA, 0xff);
     outb(PIC2_DATA, 0xff);
 
+    PIC_remap(PIC_1_OFFSET, PIC_2_OFFSET);
+
     for(int i=0;i<256;i++) {
+        if(handlerFuncs[i] == NULL && handlerFuncsErrNo[i] == NULL) {
+            LOG("SKIPPING: %d", i);
+            continue;
+        }
         if(handlerFuncs[i] != NULL) {
             arg.offset = (uint32_t)(handlerFuncs[i]);
         } else {
@@ -613,19 +656,44 @@ void init_idt() {
     idt.offset = (uint32_t)interruptTable;
 
     read_idt();
+
     LOG("Loading data: size: %d, offset: %d", idt.size, idt.offset);
     asm volatile(
             "lidt (%0)\n\t"
             "sti\n\t"
-            "int $55\n\t"
-            //"int $13\n\t"
             :
             : "r" (&idt)
             : "memory"
             );
-    //outb(PIC1_DATA, 0x00);
-    //outb(PIC2_DATA, 0x00);
+
+    outb(PIC1_DATA, 0xff);
+    outb(PIC2_DATA, 0xff);
     read_idt();
+}
+
+void register_interrupt(uint32_t interrupt_num, InterruptFunc interrupt_func) {
+    asm volatile("cli");
+    bool pic_2_needed = false;
+    uint8_t pic_1_bit = 0, pic_2_bit = 0;
+
+    if(interrupt_num >= PIC_2_OFFSET) {
+        pic_2_needed = true;
+        pic_2_bit = interrupt_num - PIC_2_OFFSET;
+        pic_1_bit = 2;
+    } else {
+        pic_1_bit = interrupt_num - PIC_1_OFFSET;
+    }
+
+    uint8_t pic1_mask = inb(PIC1_DATA);
+    outb(PIC1_DATA, pic1_mask & ~(1 << pic_1_bit));
+    if(pic_2_needed) {
+        uint8_t pic2_mask = inb(PIC2_DATA);
+        outb(PIC2_DATA, pic2_mask & ~(1 << pic_2_bit));
+    }
+
+    interruptList[interrupt_num] = interrupt_func;
+
+    asm volatile("sti");
 }
 
 void read_idt() {

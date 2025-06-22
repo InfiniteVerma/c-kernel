@@ -1,9 +1,15 @@
 #ifndef __INTERRUPTS__
 #define __INTERRUPTS__
 
-#include <stdint.h>
-#include "panic.h"
 #include <stdbool.h>
+#include <stdint.h>
+
+#include "panic.h"
+
+#define PIC_1_OFFSET 0x20
+#define PIC_2_OFFSET 0x28
+
+typedef void (*InterruptFunc)(void);
 
 typedef struct {
     uint64_t descriptor;
@@ -27,7 +33,6 @@ GateDescriptor createNewGateDescriptor();
 uint64_t generate_gd_entry(GateDescriptorNewArgs arg);
 
 static inline GateDescriptor GateDescriptor_create(GateDescriptorNewArgs arg) {
-
     // then generate a uint64_t from it and assign it to gd
     GateDescriptor gd;
     gd.descriptor = generate_gd_entry(arg);
@@ -36,6 +41,7 @@ static inline GateDescriptor GateDescriptor_create(GateDescriptorNewArgs arg) {
 
 void init_idt();
 void read_idt();
+void register_interrupt(uint32_t interrupt_num, InterruptFunc interrupt_func);
 
 #ifdef TEST
 void run_idt_tests();

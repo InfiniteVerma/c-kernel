@@ -1,5 +1,6 @@
 #include <kernel/io/rtc.h>
 #include <stdio.h>
+#include <kernel/interrupts.h>
 #include <utils.h>
 
 #define NMI_disable_bit 1
@@ -124,4 +125,25 @@ int get_timestamp(char* buffer) {
     struct DateTime d = get_date_time();
     va_list args;
     return get_timestamp_wrapper(buffer, 100, "[%d%d-%d-%dT%d:%d:%d]  ", d.century, d.year, d.month, d.hours, d.minutes, d.seconds);
+}
+
+static void configure_rtc_interrupts() {
+    LOG("rtc_test BEGIN");
+    disable_cmos_nmi();
+    select_cmos_register(0x8B);
+    char prev = inb(CMOS_DATA_REG);
+    outb(CMOS_CONTROL_REG, 0x8B);
+    outb(CMOS_DATA_REG, prev | 0x40);
+}
+
+void rtc_ack_int() {
+    outb(CMOS_CONTROL_REG, 0x0C);
+    inb(CMOS_DATA_REG);
+}
+
+void register_rtc_driver() {
+    asm volatile("cli");
+    configure_rtc_interrupts();
+    register_interrupt(PIC_2_OFFSET, rtc_ack_int);
+    asm volatile("sti");
 }

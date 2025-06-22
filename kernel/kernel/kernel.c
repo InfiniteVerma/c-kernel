@@ -37,6 +37,7 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     init_gdt();
     read_gdt();
     init_idt();
+    register_rtc_driver();
 
     struct DateTime date_time = get_date_time();
     print_date_time(date_time);
@@ -62,4 +63,5 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 #ifdef TEST
     exit_(0);
 #endif
+    while(1) {};
 }
