@@ -1,7 +1,14 @@
 CompileFlags:
   Add: [
-    #-nostdinc, 
+    -nostdinc, 
     -isysroot, /home/anant/dev/projs/c-kernel/sysroot, 
     -I/home/anant/dev/projs/c-kernel/sysroot/usr/include,
-    -I/home/anant/dev/projs/barebones/opt/cross/lib/gcc/i686-elf/14.2.0/include/
+    -I/home/anant/dev/projs/barebones/opt/cross/lib/gcc/i686-elf/14.2.0/include/,
+    "--target=i686-elf",
+    "-ffreestanding",
+    "-fno-pie",
+    "-nostdlib",
+    "-Ilibc/include",
+    "-Ikernel/include",
+    "-Iarch/i386"
   ]
