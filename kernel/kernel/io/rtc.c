@@ -1,26 +1,20 @@
+#include <kernel/interrupts.h>
 #include <kernel/io/rtc.h>
 #include <stdio.h>
-#include <kernel/interrupts.h>
 #include <utils.h>
 
 #define NMI_disable_bit 1
 #define selected_cmos_register_number 0x0F
 
 static void outb(uint16_t port, uint8_t value) {
-    asm volatile (
-        "outb %0, %1"
-        :  // No output operands
-        : "a"(value), "Nd"(port)
-    );
+    asm volatile("outb %0, %1"
+                 :  // No output operands
+                 : "a"(value), "Nd"(port));
 }
 
 static uint8_t inb(uint16_t port) {
     uint8_t value;
-    asm volatile (
-        "inb %1, %0"
-        : "=a"(value)
-        : "Nd"(port)
-    );
+    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
     return value;
 }
 
@@ -49,14 +43,14 @@ static int is_update_in_progress() {
 }
 
 static struct DateTime guarded_op(F f, struct DateTime d) {
-    while(1) {
-        while(is_update_in_progress())  {
+    while (1) {
+        while (is_update_in_progress()) {
             continue;
         }
 
         d = f(d);
 
-        while(is_update_in_progress())  {
+        while (is_update_in_progress()) {
             continue;
         }
         break;
@@ -92,24 +86,25 @@ static struct DateTime write(struct DateTime d) {
 
 struct DateTime get_date_time() {
     struct DateTime dummy;
-    return guarded_op(read, dummy); // passing dummy param
+    return guarded_op(read, dummy);  // passing dummy param
 }
 
 void set_date_time(struct DateTime date_time) {
-    guarded_op(write, date_time); // ignoring ret val
+    guarded_op(write, date_time);  // ignoring ret val
 }
 
 void configure_rtc() {
     read_cmos_register(STATUS_REG_B);
     uint8_t flags = 0;
-    flags |= (1 << 1); // Enabling 24 hour format
-    flags |= (1 << 2); // Enable binary mode
+    flags |= (1 << 1);  // Enabling 24 hour format
+    flags |= (1 << 2);  // Enable binary mode
     write_cmos_register(STATUS_REG_B, flags);
 }
 
 void print_date_time(struct DateTime d) {
-    LOG("DateTime { seconds: %d, minutes: %d, hours: %d, day_of_month: %d, month: %d, year: %d, century: %d }\n",
-            d.seconds, d.minutes, d.hours, d.day_of_month, d.month, d.year, d.century);
+    LOG("DateTime { seconds: %d, minutes: %d, hours: %d, day_of_month: %d, month: %d, year: %d, "
+        "century: %d }\n",
+        d.seconds, d.minutes, d.hours, d.day_of_month, d.month, d.year, d.century);
 }
 
 static int get_timestamp_wrapper(char* buffer, int size, const char* fmt, ...) {
@@ -124,7 +119,8 @@ static int get_timestamp_wrapper(char* buffer, int size, const char* fmt, ...) {
 int get_timestamp(char* buffer) {
     struct DateTime d = get_date_time();
     va_list args;
-    return get_timestamp_wrapper(buffer, 100, "[%d%d-%d-%dT%d:%d:%d]  ", d.century, d.year, d.month, d.hours, d.minutes, d.seconds);
+    return get_timestamp_wrapper(buffer, 100, "[%d%d-%d-%dT%d:%d:%d]  ", d.century, d.year, d.month,
+                                 d.hours, d.minutes, d.seconds);
 }
 
 static void configure_rtc_interrupts() {

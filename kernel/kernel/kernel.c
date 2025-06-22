@@ -1,4 +1,5 @@
 #include <kernel/allocator.h>
+#include <kernel/circular_buffer.h>
 #include <kernel/gdt.h>
 #include <kernel/interrupts.h>
 #include <kernel/io/rtc.h>
@@ -6,12 +7,11 @@
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
 #include <kernel/tty.h>
-#include <kernel/circular_buffer.h>
 #include <utils.h>
 
 #ifdef TEST
-#include <stdio.h>
 #include <kernel/spinlock.h>
+#include <stdio.h>
 #include <utils.h>
 #endif
 
@@ -53,7 +53,7 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     run_utils_tests();
     run_stdio_tests();
     run_allocator_tests();
-    //run_gdt_tests(); TODO
+    // run_gdt_tests(); TODO
     run_idt_tests();
     run_spinlock_tests();
 #endif
@@ -63,5 +63,6 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
 #ifdef TEST
     exit_(0);
 #endif
-    while(1) {};
+    while (1) {
+    };
 }

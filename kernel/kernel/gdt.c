@@ -5,7 +5,7 @@
 
 #define FLAGS 1100
 
-uint64_t gdt[3] = {0}; // has to be global memory. This needs to stay alive.
+uint64_t gdt[3] = {0};  // has to be global memory. This needs to stay alive.
 
 static const uint64_t gdt_parse_base(uint64_t segment) {
     uint64_t ret = 0;
@@ -160,9 +160,9 @@ static void fill_gdt_vals() {
     const uint64_t null_segment = 0;
 
     // TODO buggy
-    //gdt[0] = null_segment;
-    //gdt[1] = code_segment;
-    //gdt[2] = data_segment;
+    // gdt[0] = null_segment;
+    // gdt[1] = code_segment;
+    // gdt[2] = data_segment;
     gdt[0] = 0x0000000000000000;
     gdt[1] = 0x00CF9A000000FFFF;
     gdt[2] = 0x00CF92000000FFFF;
@@ -178,19 +178,20 @@ void init_gdt() {
     gdtr.base = (uint64_t)gdt;
 
     asm volatile(
-            "cli\n\t"
-            "lgdt (%0)\n\t"
-            "ljmp $0x08, $1f\n\t" // using inline 1j preserves stack frame. Using $reload_CS like in tutorial does not
-            "1:\n\t"
-            "mov $0x10, %%eax\n\t"
-            "mov %%eax, %%ds\n\t"
-            "mov %%eax, %%es\n\t"
-            "mov %%eax, %%fs\n\t"
-            "mov %%eax, %%gs\n\t"
-            "mov %%eax, %%ss\n\t"
-            :  // No output operands
-            : "r"(&gdtr)
-            : "memory");
+        "cli\n\t"
+        "lgdt (%0)\n\t"
+        "ljmp $0x08, $1f\n\t"  // using inline 1j preserves stack frame. Using $reload_CS like in
+                               // tutorial does not
+        "1:\n\t"
+        "mov $0x10, %%eax\n\t"
+        "mov %%eax, %%ds\n\t"
+        "mov %%eax, %%es\n\t"
+        "mov %%eax, %%fs\n\t"
+        "mov %%eax, %%gs\n\t"
+        "mov %%eax, %%ss\n\t"
+        :  // No output operands
+        : "r"(&gdtr)
+        : "memory");
 }
 
 void read_gdt() {

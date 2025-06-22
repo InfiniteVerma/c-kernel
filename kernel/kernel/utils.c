@@ -1,15 +1,15 @@
-#include <utils.h>
 #include <stdbool.h>
 #include <string.h>
+#include <utils.h>
 #ifdef TEST
-#include <stdio.h>
 #include <kernel/panic.h>
+#include <stdio.h>
 #endif
 
 void reverse(char msg[100], int len) {
     int start = 0;
-    int end = len - 1; 
-    while(start < end) {
+    int end = len - 1;
+    while (start < end) {
         char c = msg[start];
         msg[start] = msg[end];
         msg[end] = c;
@@ -20,22 +20,22 @@ void reverse(char msg[100], int len) {
 
 const char* to_str(char msg[100], int val) {
     bool isNeg = val < 0;
-    if(isNeg) val = -1 * val;
+    if (isNeg) val = -1 * val;
 
     int tmp = val;
     int i = 0;
     memset(msg, 0, sizeof(msg));
-    if(val == 0) {
+    if (val == 0) {
         msg[0] = '0';
         msg[1] = '\0';
         return msg;
     }
-    while(tmp) {
+    while (tmp) {
         msg[i] = tmp % 10 + '0';
         tmp /= 10;
         i++;
     }
-    if(isNeg) {
+    if (isNeg) {
         msg[i] = '-';
         i++;
     }
@@ -47,12 +47,12 @@ const char* to_str(char msg[100], int val) {
 const char* int_to_hex_char(char msg[100], unsigned long long inp) {
     int i = 0;
     memset(msg, 0, sizeof(msg));
-    if(inp == 0) {
+    if (inp == 0) {
         msg[0] = '0';
         msg[1] = '\0';
         return msg;
     }
-    while(inp) {
+    while (inp) {
         if (inp % 16 < 10) {
             msg[i] = (inp % 16) + '0';  // For digits 0-9
         } else {
@@ -66,7 +66,6 @@ const char* int_to_hex_char(char msg[100], unsigned long long inp) {
 
     return msg;
 }
-
 
 #ifdef TEST
 char test_arr[100];

@@ -1,5 +1,5 @@
-#include <kernel/spinlock.h>
 #include <kernel/panic.h>
+#include <kernel/spinlock.h>
 #ifdef TEST
 #include <stdio.h>
 #include <utils.h>
@@ -8,31 +8,25 @@
 // TODO make a utils?
 static int set_val_atomic(uint8_t* ptr, int val) {
     int result = -1;
-    __asm__ volatile(
-            "xchg %0, %1"
-        :   "=r"(result), "+m"(*ptr)
-        :   "0"(val)
-        :   "memory");
+    __asm__ volatile("xchg %0, %1" : "=r"(result), "+m"(*ptr) : "0"(val) : "memory");
     assert(*ptr == val, "*ptr is not 1");
     return result;
 }
 
 int spin_lock(spinlock_t* lock) {
-    if(!lock)
-        panic("spinlock NULL!");
+    if (!lock) panic("spinlock NULL!");
 
-    while(set_val_atomic(&lock->locked, 1) != 0) {};
+    while (set_val_atomic(&lock->locked, 1) != 0) {
+    };
 
     assert(lock->locked == 1, "lock->locked is not 1");
     return 0;
 }
 
 int spin_unlock(spinlock_t* lock) {
-    if(!lock)
-        panic("spinlock NULL!");
+    if (!lock) panic("spinlock NULL!");
 
-    if(lock->locked == 0)
-        panic("lock not held, trying to unlock. Asserting");
+    if (lock->locked == 0) panic("lock not held, trying to unlock. Asserting");
 
     lock->locked = 0;
 
@@ -40,10 +34,9 @@ int spin_unlock(spinlock_t* lock) {
 }
 
 int spin_trylock(spinlock_t* lock) {
-    if(!lock)
-        panic("spinlock NULL!");
+    if (!lock) panic("spinlock NULL!");
 
-    if(set_val_atomic(&lock->locked, 1) == 0)
+    if (set_val_atomic(&lock->locked, 1) == 0)
         return 0;
     else
         return BUSY;

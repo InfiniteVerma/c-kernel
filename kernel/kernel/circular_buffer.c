@@ -1,8 +1,8 @@
-#include <kernel/io/rtc.h>
 #include <kernel/circular_buffer.h>
+#include <kernel/io/rtc.h>
 #include <kernel/panic.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <utils.h>
 
 char BUFFER[NUM_LOG_LINES][LINE_SIZE];
@@ -17,9 +17,10 @@ static int build_prefix(char* out, const char* fmt, ...) {
     return size;
 }
 
-int write_to_buffer_colored(const char *fmt, const char *color, const char *level, const char *file_name, int line_number, ...) {
+int write_to_buffer_colored(const char* fmt, const char* color, const char* level,
+                            const char* file_name, int line_number, ...) {
     asm volatile("cli");
-    if(tail == FULL_IDX - 1) {
+    if (tail == FULL_IDX - 1) {
         // empty buffer first
         // then write
         dump_buffer();
@@ -36,9 +37,9 @@ int write_to_buffer_colored(const char *fmt, const char *color, const char *leve
 
     int totalSize = size + prefix_size;
 
-    if(totalSize > LINE_SIZE) {
+    if (totalSize > LINE_SIZE) {
         panic("LOG_SIZE_OVERFLOW");
-        return LOG_SIZE_OVERFLOW; // TODO handle error gracefully
+        return LOG_SIZE_OVERFLOW;  // TODO handle error gracefully
     }
 
     memcpy(BUFFER[tail], prefix, prefix_size);
@@ -50,13 +51,14 @@ int write_to_buffer_colored(const char *fmt, const char *color, const char *leve
     return 0;
 }
 
-// TODO: Currently we will write till buffer completes and then clear it entirely 
+// TODO: Currently we will write till buffer completes and then clear it entirely
 // so it's not being used as a circular buffer currently
 //
 // When implementing manual flush, background thread or flush-on-panic, need to handle this
-int write_to_buffer(const char* fmt, const char* level, const char* file_name, int line_number, ...) {
+int write_to_buffer(const char* fmt, const char* level, const char* file_name, int line_number,
+                    ...) {
     asm volatile("cli");
-    if(tail == FULL_IDX - 1) {
+    if (tail == FULL_IDX - 1) {
         // empty buffer first
         // then write
         dump_buffer();
@@ -73,9 +75,9 @@ int write_to_buffer(const char* fmt, const char* level, const char* file_name, i
 
     int totalSize = size + prefix_size;
 
-    if(totalSize > LINE_SIZE) {
+    if (totalSize > LINE_SIZE) {
         panic("LOG_SIZE_OVERFLOW");
-        return LOG_SIZE_OVERFLOW; // TODO handle error gracefully
+        return LOG_SIZE_OVERFLOW;  // TODO handle error gracefully
     }
 
     memcpy(BUFFER[tail], prefix, prefix_size);
@@ -87,7 +89,7 @@ int write_to_buffer(const char* fmt, const char* level, const char* file_name, i
 }
 
 void dump_buffer() {
-    for(int i=0;i<tail;i++) {
+    for (int i = 0; i < tail; i++) {
         printf("%s\n", BUFFER[i]);
     }
     tail = 0;
