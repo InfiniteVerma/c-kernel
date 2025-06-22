@@ -2,5 +2,6 @@
 isodir
 sysroot
 tags
-*.txt
+#*.txt
 *log
+build
