@@ -9,24 +9,30 @@
 typedef bool (*IS_READY)(void*);
 typedef void (*RESUME_FUNC)(void*);
 
-// TODO union for state?
+enum FutureStatus { PENDING = 0, DONE };
 
-struct Future {
-    uint32_t tick;
-    IS_READY is_ready;
-    RESUME_FUNC resume_func;
+struct SleepContext {
+    uint32_t target_tick;
 };
 
-typedef struct Future Future;
+struct Future {
+    void* context;
+    IS_READY is_ready;
+};
 
 struct FutureList {
     struct Future timeFutures[FUTURE_COUNT];  // TODO assume that this is sorted
     int lastIdx;
 };
 
+typedef struct Future Future;
+typedef struct SleepContext SleepContext;
+typedef enum FutureStatus FutureStatus;
+
 void init_futures();
 void await(Future);
 void process_time_futures();
 Future create_future(uint32_t, IS_READY, RESUME_FUNC);
+void delete_future(Future);
 
 #endif

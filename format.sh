@@ -1,1 +1,2 @@
-git diff --name-only --cached -- '*.cpp' '*.h' | xargs clang-format -i
+find . -regex '.*\.\(c\|h\|cpp\|hpp\)' -exec clang-format -i {} +
+echo "Formatting done"

@@ -1,3 +1,4 @@
+#include <kernel/allocator.h>
 #include <kernel/future.h>
 #include <kernel/io/rtc.h>
 #include <kernel/monotonic_tick.h>
@@ -9,11 +10,16 @@
 struct FutureList futureList;
 bool SHOULD_POLL = false;
 
+SleepContext* alloc_sleep_context() {
+    SleepContext* ctx = (SleepContext*)malloc(sizeof(SleepContext));
+    return ctx;
+}
+
 Future create_future(uint32_t seconds, IS_READY is_ready, RESUME_FUNC resume_func) {
-    Future fut;
-    fut.tick = get_tick() + seconds * RTC_FREQ;
-    fut.is_ready = is_ready;
-    fut.resume_func = resume_func;
+    SleepContext* ctx = alloc_sleep_context();
+    ctx->target_tick = get_tick() + seconds * RTC_FREQ;
+
+    Future fut = {.context = ctx, .is_ready = is_ready};
 
     return fut;
 }
@@ -22,12 +28,8 @@ void init_futures() {
     futureList.lastIdx = -1;
 }
 
-enum FutureStatus { PENDING = 0, DONE };
-
-typedef enum FutureStatus FutureStatus;
-
 static FutureStatus poll(Future fut) {
-    if (get_tick() >= fut.tick) return DONE;
+    if (fut.is_ready(fut.context)) return DONE;
     return PENDING;
 }
 
@@ -45,7 +47,12 @@ void await(Future fut) {
         }
     }
 
-    // TODO delete it
+    delete_future(fut);
+}
+
+void delete_future(Future fut) {
+    free(fut.context);
+    // TODO remove from futureList
 }
 
 void process_time_futures() {
@@ -53,7 +60,8 @@ void process_time_futures() {
     SHOULD_POLL = false;
     INTERRUPT_GUARDED({
         if (futureList.lastIdx != -1) {
-            if (get_tick() >= futureList.timeFutures[0].tick) SHOULD_POLL = true;
+            SleepContext* ctx = (SleepContext*)futureList.timeFutures[0].context;
+            if (get_tick() >= ctx->target_tick) SHOULD_POLL = true;
         }
     });
 }
