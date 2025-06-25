@@ -1,20 +1,33 @@
 #include <kernel/allocator.h>
 #include <kernel/circular_buffer.h>
+#include <kernel/future.h>
 #include <kernel/gdt.h>
 #include <kernel/interrupts.h>
 #include <kernel/io/rtc.h>
 #include <kernel/io/uart.h>
+#include <kernel/monotonic_tick.h>
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
 #include <kernel/tty.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <utils.h>
-
 #ifdef TEST
 #include <kernel/spinlock.h>
 #include <stdio.h>
 #include <utils.h>
 #endif
+
+bool fut_is_ready(void* ctx) {
+    uint32_t* needed_tick = (uint32_t*)ctx;
+
+    while (get_tick() < *needed_tick) asm volatile("hlt");
+    return true;
+}
+
+void fut_resume_func(void* ctx) {
+    printf("resume func called\n");
+}
 
 extern unsigned int get_esp();
 
@@ -43,12 +56,20 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     struct DateTime date_time = get_date_time();
     print_date_time(date_time);
 
-#ifndef TEST
+    // #ifndef TEST
+    //     LOG("Sleeping for 4 seconds");
+    //     dump_buffer();
+    //     sleep(4);
+    //     LOG("Waking up");
+    // #endif
+    init_futures();
+
     LOG("Sleeping for 4 seconds");
     dump_buffer();
-    sleep(4);
+    Future fut = create_future(4, fut_is_ready, fut_resume_func);
+    await(fut);
+
     LOG("Waking up");
-#endif
 
     // date_time.hours -= 1;
     // set_date_time(date_time);

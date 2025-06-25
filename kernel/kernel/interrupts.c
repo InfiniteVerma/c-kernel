@@ -676,8 +676,8 @@ void init_idt() {
     read_idt();
 }
 
+// Expects the caller to disable interrupts first
 void register_interrupt(uint32_t interrupt_num, InterruptFunc interrupt_func) {
-    asm volatile("cli");
     bool pic_2_needed = false;
     uint8_t pic_1_bit = 0, pic_2_bit = 0;
 
@@ -697,8 +697,6 @@ void register_interrupt(uint32_t interrupt_num, InterruptFunc interrupt_func) {
     }
 
     interruptList[interrupt_num] = interrupt_func;
-
-    asm volatile("sti");
 }
 
 void read_idt() {

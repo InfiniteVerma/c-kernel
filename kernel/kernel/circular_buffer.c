@@ -19,7 +19,6 @@ static int build_prefix(char* out, const char* fmt, ...) {
 
 int write_to_buffer_colored(const char* fmt, const char* color, const char* level,
                             const char* file_name, int line_number, ...) {
-    asm volatile("cli");
     if (tail == FULL_IDX - 1) {
         // empty buffer first
         // then write
@@ -47,7 +46,6 @@ int write_to_buffer_colored(const char* fmt, const char* color, const char* leve
     memcpy(BUFFER[tail++] + prefix_size + size, RESET, strlen(RESET));
 
     va_end(args);
-    asm volatile("sti");
     return 0;
 }
 
@@ -57,7 +55,6 @@ int write_to_buffer_colored(const char* fmt, const char* color, const char* leve
 // When implementing manual flush, background thread or flush-on-panic, need to handle this
 int write_to_buffer(const char* fmt, const char* level, const char* file_name, int line_number,
                     ...) {
-    asm volatile("cli");
     if (tail == FULL_IDX - 1) {
         // empty buffer first
         // then write
@@ -84,7 +81,6 @@ int write_to_buffer(const char* fmt, const char* level, const char* file_name, i
     memcpy(BUFFER[tail++] + prefix_size, buf, size);
 
     va_end(args);
-    asm volatile("sti");
     return 0;
 }
 

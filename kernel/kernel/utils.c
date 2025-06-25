@@ -79,6 +79,13 @@ uint8_t inb(uint16_t port) {
     return value;
 }
 
+inline void disable_interrupts() {
+    asm volatile("cli" ::: "memory");
+}
+inline void enable_interrupts() {
+    asm volatile("sti" ::: "memory");
+}
+
 #ifdef TEST
 char test_arr[100];
 void test_reverse() {

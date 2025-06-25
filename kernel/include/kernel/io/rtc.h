@@ -17,6 +17,8 @@
 #define STATUS_REG_A 0x0a
 #define STATUS_REG_B 0x0b
 
+#define RTC_FREQ 256
+
 typedef struct DateTime (*F)(struct DateTime);
 
 struct DateTime {
@@ -38,7 +40,6 @@ void configure_rtc();
 void register_rtc_driver();
 
 int get_timestamp(char*);
-uint32_t get_tick();
 
 void run_rtc_tests();
 

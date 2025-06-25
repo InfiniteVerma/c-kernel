@@ -1,5 +1,6 @@
 #include <kernel/interrupts.h>
 #include <kernel/io/rtc.h>
+#include <kernel/monotonic_tick.h>
 #include <stdio.h>
 #include <utils.h>
 #ifdef TEST
@@ -8,8 +9,6 @@
 
 #define NMI_disable_bit 1
 #define selected_cmos_register_number 0x0F
-
-uint32_t tick = 0;
 
 static void disable_cmos_nmi() {
     uint8_t value = (NMI_disable_bit << 7) | selected_cmos_register_number;
@@ -117,7 +116,6 @@ int get_timestamp(char* buffer) {
 }
 
 static void configure_rtc_interrupts() {
-    LOG("rtc_test BEGIN");
     disable_cmos_nmi();
     select_cmos_register(0x8B);
     char prev = inb(CMOS_DATA_REG);
@@ -127,20 +125,16 @@ static void configure_rtc_interrupts() {
 }
 
 void process_rtc_interrupt() {
-    tick++;
+    process_tick();
     outb(CMOS_CONTROL_REG, 0x0C);
     inb(CMOS_DATA_REG);
 }
 
-uint32_t get_tick() {
-    return tick;
-}
-
 void register_rtc_driver() {
-    asm volatile("cli");
-    configure_rtc_interrupts();
-    register_interrupt(PIC_2_OFFSET, process_rtc_interrupt);
-    asm volatile("sti");
+    INTERRUPT_GUARDED({
+        configure_rtc_interrupts();
+        register_interrupt(PIC_2_OFFSET, process_rtc_interrupt);
+    });
 }
 
 #ifdef TEST
