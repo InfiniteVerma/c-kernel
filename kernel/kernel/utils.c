@@ -24,7 +24,7 @@ const char* to_str(char msg[100], int val) {
 
     int tmp = val;
     int i = 0;
-    memset(msg, 0, sizeof(msg));
+    memset(msg, 0, strlen(msg));
     if (val == 0) {
         msg[0] = '0';
         msg[1] = '\0';
