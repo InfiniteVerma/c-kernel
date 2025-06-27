@@ -21,7 +21,7 @@
 bool fut_is_ready(void* ctx) {
     uint32_t* needed_tick = (uint32_t*)ctx;
 
-    while (get_tick() < *needed_tick) asm volatile("hlt");
+    if (get_tick() < *needed_tick) return false;
     return true;
 }
 
@@ -34,6 +34,11 @@ extern unsigned int get_esp();
 void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     // unsigned int esp = get_esp();
     terminal_initialize();
+
+    init_gdt();
+    read_gdt();
+    init_idt();
+
     assert(init_serial() == 0, "Could not initialize serial port");
     // printf("Stack pointer: 0x%x\n", esp);
     LOG("Hello, kernel World, bootloader: %s", mbd->boot_loader_name);
@@ -48,11 +53,6 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     LOG("reading before lgdt done");
     read_gdt();
 #endif
-    init_gdt();
-    read_gdt();
-    init_idt();
-    register_rtc_driver();
-
     struct DateTime date_time = get_date_time();
     print_date_time(date_time);
 
@@ -63,13 +63,6 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     //     LOG("Waking up");
     // #endif
     init_futures();
-
-    LOG("Sleeping for 4 seconds");
-    dump_buffer();
-    Future fut = create_future(4, fut_is_ready, fut_resume_func);
-    await(fut);
-
-    LOG("Waking up");
 
     // date_time.hours -= 1;
     // set_date_time(date_time);
@@ -88,6 +81,13 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     run_rtc_tests();
 #endif
 
+    serial_write("anant", 5);
+
+    LOG("Sleeping for 4 seconds");
+    dump_buffer();
+    Future fut = create_future(4, fut_is_ready, fut_resume_func);
+    await(fut);
+    LOG("Waking up");
     dump_buffer();
 
 #ifdef TEST

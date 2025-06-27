@@ -59,7 +59,9 @@ void terminal_write(const char* data, size_t size) {
     }
 }
 
+#if 0
 void terminal_writestring(const char* data) {
     terminal_write(data, strlen(data));
     serial_write(data, strlen(data));
 }
+#endif

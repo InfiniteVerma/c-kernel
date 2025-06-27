@@ -56,3 +56,4 @@
  - https://youtu.be/gBykJMqDqH0?feature=shared
  - https://www.felixcloutier.com/x86/
  - RTC: https://www.nxp.com/docs/en/data-sheet/MC146818.pdf
+ - UART: https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf

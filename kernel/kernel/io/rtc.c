@@ -91,6 +91,7 @@ void configure_rtc() {
     flags |= (1 << 1);  // Enabling 24 hour format
     flags |= (1 << 2);  // Enable binary mode
     write_cmos_register(STATUS_REG_B, flags);
+    register_rtc_driver();
 }
 
 void print_date_time(struct DateTime d) {

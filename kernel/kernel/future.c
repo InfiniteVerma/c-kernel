@@ -19,7 +19,7 @@ Future create_future(uint32_t seconds, IS_READY is_ready, RESUME_FUNC resume_fun
     SleepContext* ctx = alloc_sleep_context();
     ctx->target_tick = get_tick() + seconds * RTC_FREQ;
 
-    Future fut = {.context = ctx, .is_ready = is_ready};
+    Future fut = {.type = SleepFuture, .context = ctx, .is_ready = is_ready};
 
     return fut;
 }
@@ -34,10 +34,12 @@ static FutureStatus poll(Future fut) {
 }
 
 void await(Future fut) {
-    INTERRUPT_GUARDED({
-        if (futureList.lastIdx == FUTURE_COUNT) panic("Future list full!");
-        futureList.timeFutures[++futureList.lastIdx] = fut;
-    });
+    if (fut.type == SleepFuture) {
+        INTERRUPT_GUARDED({
+            if (futureList.lastIdx == FUTURE_COUNT) panic("Future list full!");
+            futureList.timeFutures[++futureList.lastIdx] = fut;
+        });
+    }
 
     while (poll(fut) == PENDING) {
         SHOULD_POLL = false;
@@ -51,8 +53,20 @@ void await(Future fut) {
 }
 
 void delete_future(Future fut) {
-    free(fut.context);
-    // TODO remove from futureList
+    switch (fut.type) {
+        case SleepFuture: {
+            free(fut.context);
+            // TODO remove from futureList
+            break;
+        }
+        case IOFuture: {
+            break;
+        }
+    }
+}
+
+void wakeup_executor() {
+    SHOULD_POLL = true;
 }
 
 void process_time_futures() {
