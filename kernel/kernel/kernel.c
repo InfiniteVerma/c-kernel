@@ -8,6 +8,7 @@
 #include <kernel/monotonic_tick.h>
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
+#include <kernel/pci.h>
 #include <kernel/tty.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -77,17 +78,35 @@ void kernel_main(multiboot_info_t* mbd, unsigned int magic) {
     run_allocator_tests();
     // run_gdt_tests(); TODO
     run_idt_tests();
+    dump_buffer();
     run_spinlock_tests();
+    dump_buffer();
     run_rtc_tests();
+    run_pci_tests();
+    dump_buffer();
+    exit_(0);
 #endif
 
-    serial_write("anant", 5);
+    // LOG("Sleeping for 4 seconds");
+    // dump_buffer();
+    // Future fut = create_future(4, fut_is_ready, fut_resume_func);
+    // await(fut);
+    // LOG("Waking up");
 
-    LOG("Sleeping for 4 seconds");
-    dump_buffer();
-    Future fut = create_future(4, fut_is_ready, fut_resume_func);
-    await(fut);
-    LOG("Waking up");
+    Pci pci = find_pci_address(0x10EC, 0x8139);
+    LOG("Found device at bus: %d, slot: %d", pci.address.bus, pci.address.slot);
+    uint32_t base_addr = find_io_base(pci);
+    LOG("Found base address: %x", base_addr);
+    LOG("Mac: %x", inl(base_addr));
+    LOG("Mac 2: %x", inl(base_addr + 4));
+
+    uint32_t memory_addr = find_mmap_base(pci);
+    LOG("Found memory address: %x", memory_addr);
+
+    uint8_t* mmio = (uint8_t*)memory_addr;
+    uint8_t mac[6];
+    for (int i = 0; i < 6; i++) mac[i] = mmio[i];
+    LOG("MAC from MMIO: %x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     dump_buffer();
 
 #ifdef TEST

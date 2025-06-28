@@ -167,7 +167,8 @@ static void fill_gdt_vals() {
     gdt[1] = 0x00CF9A000000FFFF;
     gdt[2] = 0x00CF92000000FFFF;
     assert(code_segment != 0, "code_Segment is zero!");
-    LOG("Loading null: %x - code: %x - data: %x", null_segment, code_segment, data_segment);
+    LOG("Loading null: 0x%llx - code: 0x%llx - data: 0x%llx", null_segment, code_segment,
+        data_segment);
 }
 
 void init_gdt() {
@@ -200,9 +201,9 @@ void read_gdt() {
     asm volatile("sgdt %0" : "=m"(gdtr));
 
     uint64_t* gdt_tmp = (uint64_t*)(gdtr.base);
-    LOG("GDT Limit: 0x%x", gdtr.limit);
+    LOG("GDT Limit: 0x%llx", gdtr.limit);
     for (int i = 0; i <= gdtr.limit / 8; i++) {
-        LOG("i: %d. val: %x", i, gdt_tmp[i]);
+        LOG("i: %d. val: 0x%llx", i, gdt_tmp[i]);
     }
 }
 

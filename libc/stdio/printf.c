@@ -14,174 +14,149 @@ static bool print(const char* data, size_t length) {
     return true;
 }
 
-int printf(const char* restrict format, ...) {
-    va_list parameters;
-    va_start(parameters, format);
-
-    int written = 0;
-
-    while (*format != '\0') {
-        size_t maxrem = INT_MAX - written;
-
-        if (format[0] != '%' || format[1] == '%') {
-            if (format[0] == '%') format++;
-            size_t amount = 1;
-            while (format[amount] && format[amount] != '%') amount++;
-            if (maxrem < amount) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(format, amount)) return -1;
-            format += amount;
-            written += amount;
-            continue;
-        }
-
-        const char* format_begun_at = format++;
-
-        if (*format == 'c') {
-            format++;
-            char c = (char)va_arg(parameters, int /* char promotes to int */);
-            if (!maxrem) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(&c, sizeof(c))) return -1;
-            written++;
-        } else if (*format == 's') {
-            format++;
-            const char* str = va_arg(parameters, const char*);
-            size_t len = strlen(str);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(str, len)) return -1;
-            written += len;
-        } else if (*format == 'd') {
-            format++;
-            int x = va_arg(parameters, int);
-            const char* msg = to_str(msg, x);
-            size_t len = strlen(msg);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(msg, len)) return -1;
-            written += len;
-        } else if (*format == 'u') {
-            format++;
-            unsigned int x = va_arg(parameters, unsigned int);
-            const char* msg = to_str(msg, x);
-            size_t len = strlen(msg);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(msg, len)) return -1;
-            written += len;
-        } else if (*format == 'x') {  // hex
-            format++;
-            unsigned long long x = va_arg(parameters, unsigned long long);  // TODO?
-            const char* msg = int_to_hex_char(msg, x);
-            size_t len = strlen(msg);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(msg, len)) return -1;
-            written += len;
-        } else if (memcmp(format, "llu", 3) == 0) {
-            format += 3;
-            unsigned long long x = va_arg(parameters, unsigned long long);
-            const char* msg = to_str(msg, x);
-            size_t len = strlen(msg);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(msg, len)) return -1;
-            written += len;
-        } else if (memcmp(format, "lu", 2) == 0) {
-            format += 2;
-            unsigned long x = va_arg(parameters, unsigned long);
-            const char* msg = to_str(msg, x);
-            size_t len = strlen(msg);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(msg, len)) return -1;
-            written += len;
-        } else {
-            format = format_begun_at;
-            size_t len = strlen(format);
-            if (maxrem < len) {
-                // TODO: Set errno to EOVERFLOW.
-                return -1;
-            }
-            if (!print(format, len)) return -1;
-            written += len;
-            format += len;
-        }
+static void int_to_hex(char* buf, uint64_t val, int num_digits) {
+    const char* digits = "0123456789abcdef";
+    for (int i = num_digits - 1; i >= 0; i--) {
+        buf[i] = digits[val & 0xF];
+        val >>= 4;
     }
+    buf[num_digits] = '\0';
+}
 
-    va_end(parameters);
+int printf(const char* restrict format, ...) {
+    char buf[1024];
+    va_list args;
+    va_start(args, format);
+    int written = vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    print(buf, written);
     return written;
 }
 
-// Returns num of chars written or -ve if error
-int vsnprintf(char* buffer, size_t bufsz, const char* fmt, va_list vlist) {
-    // loop through fmt from left. if '%' matched:
-    // 1. '%': literal '%'
-    // 2. s: character string
-    // 3. d: signed int
-    int i = 0;
+void to_str_unsigned(char* buf, uint64_t value) {
+    to_str(buf, value);
+}
 
-    int bufIdx = 0, fmtIdx = 0;
-    while (fmtIdx < bufsz && fmt[fmtIdx] != '\0') {
-        if (fmt[fmtIdx] != '%') {
-            buffer[bufIdx++] = fmt[fmtIdx++];
-        } else {
-            fmtIdx++;  // consume the '%'
-            switch (fmt[fmtIdx]) {
-                case '%':
-                    buffer[bufIdx++] = '%';
-                    break;
-                case 's': {
-                    const char* s = va_arg(vlist, const char*);
-                    int charsToWrite = min((int)strlen(s), bufsz - bufIdx - 1);
-                    memcpy(buffer + bufIdx, s, charsToWrite);
-                    bufIdx = bufIdx + charsToWrite;
-                    break;
-                }
-                case 'd': {
-                    int i = va_arg(vlist, int);
-                    const char* s = to_str(msg, i);
-                    int charsToWrite = min((int)strlen(s), bufsz - bufIdx - 1);
-                    memcpy(buffer + bufIdx, s, charsToWrite);
-                    bufIdx = bufIdx + charsToWrite;
-                    break;
-                }
-                case 'x': {
-                    unsigned long long i = va_arg(vlist, unsigned long long);
-                    const char* s = int_to_hex_char(msg, i);
-                    int charsToWrite = min((int)strlen(s), bufsz - bufIdx - 1);
-                    memcpy(buffer + bufIdx, s, charsToWrite);
-                    bufIdx = bufIdx + charsToWrite;
-                    break;
-                }
-                default: {
-                    printf("Unsupported char: %c\n", fmt[fmtIdx]);
-                    panic("Unsupported vsnprintf\n");
-                }
+int vsnprintf(char* buffer, size_t bufsz, const char* format, va_list vlist) {
+    size_t written = 0;
+    char* out = buffer;
+
+    while (*format) {
+        if (*format != '%') {
+            if (written + 1 < bufsz) {
+                *out++ = *format;
             }
-            fmtIdx++;
+            written++;
+            format++;
+            continue;
         }
+
+        const char* start_fmt = format++;  // skip '%'
+
+        // Handle %%
+        if (*format == '%') {
+            if (written + 1 < bufsz) {
+                *out++ = '%';
+            }
+            written++;
+            format++;
+            continue;
+        }
+
+        // Handle format specifier
+        char temp[32] = {0};
+        size_t len = 0;
+
+        if (*format == 'c') {
+            char c = (char)va_arg(vlist, int);
+            if (written + 1 < bufsz) {
+                *out++ = c;
+            }
+            written++;
+            format++;
+            continue;
+
+        } else if (*format == 's') {
+            const char* s = va_arg(vlist, const char*);
+            size_t slen = strlen(s);
+            for (size_t i = 0; i < slen; i++) {
+                if (written + 1 < bufsz) {
+                    *out++ = s[i];
+                }
+                written++;
+            }
+            format++;
+            continue;
+
+        } else if (*format == 'd') {
+            int x = va_arg(vlist, int);
+            to_str(temp, x);
+            len = strlen(temp);
+            goto copy_temp;
+
+        } else if (*format == 'u') {
+            unsigned int x = va_arg(vlist, unsigned int);
+            to_str_unsigned(temp, x);
+            len = strlen(temp);
+            goto copy_temp;
+
+        } else if (*format == 'x') {
+            unsigned int x = va_arg(vlist, unsigned int);
+            int_to_hex(temp, x, 8);
+            len = strlen(temp);
+            goto copy_temp;
+
+        } else if (strncmp(format, "llx", 3) == 0) {
+            format += 2;  // we'll increment once more below
+            unsigned long long x = va_arg(vlist, unsigned long long);
+            int_to_hex(temp, x, 16);
+            len = strlen(temp);
+            goto copy_temp;
+
+        } else if (strncmp(format, "llu", 3) == 0) {
+            format += 2;
+            unsigned long long x = va_arg(vlist, unsigned long long);
+            to_str_unsigned(temp, x);
+            len = strlen(temp);
+            goto copy_temp;
+
+        } else if (strncmp(format, "lu", 2) == 0) {
+            format += 1;
+            unsigned long x = va_arg(vlist, unsigned long);
+            to_str_unsigned(temp, x);
+            len = strlen(temp);
+            goto copy_temp;
+        }
+
+        // Unknown format specifier, just print as-is
+        while (*start_fmt && *start_fmt != '%') start_fmt++;
+        while (start_fmt <= format) {
+            if (written + 1 < bufsz) *out++ = *start_fmt;
+            written++;
+            start_fmt++;
+        }
+        format++;
+        continue;
+
+    copy_temp:
+        for (size_t i = 0; i < len; i++) {
+            if (written + 1 < bufsz) {
+                *out++ = temp[i];
+            }
+            written++;
+        }
+        format++;
     }
 
-    buffer[bufIdx] = '\0';
-    return bufIdx;
+    // Null-terminate if space allows
+    if (bufsz > 0) {
+        if (written >= bufsz)
+            buffer[bufsz - 1] = '\0';
+        else
+            buffer[written] = '\0';
+    }
+
+    return written;
 }
 
 #ifdef TEST

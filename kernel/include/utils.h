@@ -16,10 +16,14 @@
     write_to_buffer_colored(x, GREEN, "INFO", __FILE__, __LINE__, ##__VA_ARGS__)
 
 const char* to_str(char msg[100], int);
-const char* int_to_hex_char(char msg[100], unsigned long long inp);
+// const char* int_to_hex_char(char msg[100], unsigned long long inp);
 void reverse(char msg[100], int len);
+
 void outb(uint16_t port, uint8_t value);
 uint8_t inb(uint16_t port);
+void outl(uint16_t port, uint32_t value);
+uint32_t inl(uint16_t port);
+
 void run_utils_tests();
 
 void disable_interrupts();

@@ -44,38 +44,46 @@ const char* to_str(char msg[100], int val) {
     return msg;
 }
 
-const char* int_to_hex_char(char msg[100], unsigned long long inp) {
-    int i = 0;
-    memset(msg, 0, sizeof(msg));
-    if (inp == 0) {
-        msg[0] = '0';
-        msg[1] = '\0';
-        return msg;
-    }
-    while (inp) {
-        if (inp % 16 < 10) {
-            msg[i] = (inp % 16) + '0';  // For digits 0-9
-        } else {
-            msg[i] = (inp % 16) - 10 + 'a';  // For characters a-f
-        }
-        i++;
-        inp /= 16;
-    }
-    msg[i] = '\0';
-    reverse(msg, i);
-
-    return msg;
-}
+// const char* int_to_hex_char(char msg[100], unsigned long long inp) {
+//     int i = 0;
+//     memset(msg, 0, sizeof(msg));
+//     if (inp == 0) {
+//         msg[0] = '0';
+//         msg[1] = '\0';
+//         return msg;
+//     }
+//     while (inp) {
+//         if (inp % 16 < 10) {
+//             msg[i] = (inp % 16) + '0';  // For digits 0-9
+//         } else {
+//             msg[i] = (inp % 16) - 10 + 'a';  // For characters a-f
+//         }
+//         i++;
+//         inp /= 16;
+//     }
+//     msg[i] = '\0';
+//     reverse(msg, i);
+//
+//     return msg;
+// }
 
 void outb(uint16_t port, uint8_t value) {
-    asm volatile("outb %0, %1"
-                 :  // No output operands
-                 : "a"(value), "Nd"(port));
+    asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
 uint8_t inb(uint16_t port) {
     uint8_t value;
     asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
+void outl(uint16_t port, uint32_t value) {
+    asm volatile("outl %0, %1" : : "a"(value), "Nd"(port));
+}
+
+uint32_t inl(uint16_t port) {
+    uint32_t value;
+    asm volatile("inl %1, %0" : "=a"(value) : "Nd"(port));
     return value;
 }
 

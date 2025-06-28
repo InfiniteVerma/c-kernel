@@ -43,6 +43,7 @@ kernel/io/uart.o \
 kernel/io/rtc.o \
 kernel/monotonic_tick.o \
 kernel/future.o \
+kernel/pci.o \
 
 OBJS=\
 $(ARCHDIR)/crti.o \

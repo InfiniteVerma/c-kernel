@@ -96,7 +96,7 @@ void configure_rtc() {
 
 void print_date_time(struct DateTime d) {
     LOG("DateTime { seconds: %d, minutes: %d, hours: %d, day_of_month: %d, month: %d, year: %d, "
-        "century: %d }\n",
+        "century: %d }",
         d.seconds, d.minutes, d.hours, d.day_of_month, d.month, d.year, d.century);
 }
 
